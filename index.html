@@ -235,9 +235,14 @@
         <button class="counter-btn plus" onclick="cambiarStat('chupitos',1)">+</button>
       </div>
       <div class="stat-counter">
-        <div><div class="stat-label">💧 Hidalgos</div><div class="stat-sublabel">Balance: repartidos − bebidos</div></div>
-        <div style="flex:1"></div>
-        <div class="stat-num" id="stat-hidalgo" style="color:#5ddf85">0</div>
+        <div><div class="stat-label">💧 Hidalgos de copa</div><div class="stat-sublabel">Copas recibidas o repartidas</div></div>
+        <button class="counter-btn minus" onclick="cambiarStat('hidalgos',-1)">−</button>
+        <div class="stat-num" id="stat-hidalgos">0</div>
+        <button class="counter-btn plus" onclick="cambiarStat('hidalgos',1)">+</button>
+      </div>
+      <div style="background:var(--fondo2);border-radius:10px;padding:10px 14px;margin-top:4px;display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-size:0.82rem;font-weight:600">⚖️ Balance de tragos</div><div class="stat-sublabel">Repartidos − Bebidos</div></div>
+        <div class="stat-num" id="stat-hidalgo" style="color:#5ddf85;font-size:1.5rem">0</div>
       </div>
     </div>
   </div>
@@ -1173,7 +1178,7 @@ function sortearJugadores() {
   state.stats = {};
   nombres.forEach(n => {
     state.comodines[n] = {p1:false, p2:false};
-    state.stats[n] = {bebidos:0, repartidos:0, chupitos:0};
+    state.stats[n] = {bebidos:0, repartidos:0, chupitos:0, hidalgos:0};
   });
   state.chupitos = 0;
   state.sessionId = 'session_' + Date.now();
@@ -1316,6 +1321,7 @@ function renderYoStats() {
   document.getElementById('stat-bebidos').textContent = s.bebidos || 0;
   document.getElementById('stat-repartidos').textContent = s.repartidos || 0;
   document.getElementById('stat-chupitos').textContent = s.chupitos || 0;
+  document.getElementById('stat-hidalgos').textContent = s.hidalgos || 0;
   const hidalgo = (s.repartidos||0) - (s.bebidos||0);
   const hEl = document.getElementById('stat-hidalgo');
   hEl.textContent = hidalgo;
@@ -1352,6 +1358,7 @@ function renderMarcador() {
     <div style="min-width:36px;text-align:center;font-size:0.68rem;color:var(--texto2)">🎁</div>
     <div style="min-width:36px;text-align:center;font-size:0.68rem;color:var(--texto2)">🥃</div>
     <div style="min-width:36px;text-align:center;font-size:0.68rem;color:var(--dorado)">💧</div>
+    <div style="min-width:36px;text-align:center;font-size:0.68rem;color:#80c0ff">⚖️</div>
   </div>`;
   sorted.forEach((a, idx) => {
     const s = state.stats[a.nombre]||{bebidos:0,repartidos:0,chupitos:0};
@@ -1363,10 +1370,11 @@ function renderMarcador() {
       <div class="marcador-stat"><span class="val">${s.bebidos||0}</span><span class="lbl">Beb.</span></div>
       <div class="marcador-stat"><span class="val">${s.repartidos||0}</span><span class="lbl">Rep.</span></div>
       <div class="marcador-stat"><span class="val">${s.chupitos||0}</span><span class="lbl">Chu.</span></div>
-      <div class="marcador-stat"><span class="val" style="color:${hidalgo>=0?'#5ddf85':'#ff8080'}">${hidalgo}</span><span class="lbl">Hid.</span></div>`;
+      <div class="marcador-stat"><span class="val" style="color:${hidalgo>=0?'#5ddf85':'#ff8080'}">${hidalgo}</span><span class="lbl">Hid.</span></div>
+      <div class="marcador-stat"><span class="val" style="color:#80c0ff">${s.hidalgos||0}</span><span class="lbl">Copa</span></div>`;
     c.appendChild(row);
   });
-  c.innerHTML += `<p style="font-size:0.68rem;color:var(--texto2);text-align:center;margin-top:6px">🍺 Bebidos · 🎁 Repartidos · 🥃 Chupitos · 💧 Hidalgo</p>`;
+  c.innerHTML += `<p style="font-size:0.68rem;color:var(--texto2);text-align:center;margin-top:6px">🍺 Bebidos · 🎁 Repartidos · 🥃 Chupitos · 💧 Hidalgo · ⚖️ Copa</p>`;
 }
 
 // ============================================================
@@ -1478,6 +1486,7 @@ async function terminarPartido() {
       jugadorA: a.jugadorA.n, equipoA: a.teamA,
       jugadorB: a.jugadorB.n, equipoB: a.teamB,
       bebidos: s.bebidos||0, repartidos: s.repartidos||0, chupitos: s.chupitos||0,
+      hidalgos: s.hidalgos||0,
       hidalgo: (s.repartidos||0)-(s.bebidos||0),
     };
   });
@@ -1515,7 +1524,8 @@ async function terminarPartido() {
       <div class="resumen-stat"><span>🍺 Tragos bebidos</span><span class="resumen-val">${j.bebidos}</span></div>
       <div class="resumen-stat"><span>🎁 Tragos repartidos</span><span class="resumen-val">${j.repartidos}</span></div>
       <div class="resumen-stat"><span>🥃 Chupitos</span><span class="resumen-val">${j.chupitos}</span></div>
-      <div class="resumen-stat"><span>💧 Hidalgo (balance)</span><span class="resumen-val" style="color:${j.hidalgo>=0?'#5ddf85':'#ff8080'}">${j.hidalgo>0?'+':''}${j.hidalgo}</span></div>`;
+      <div class="resumen-stat"><span>💧 Hidalgos de copa</span><span class="resumen-val" style="color:#80c0ff">${j.hidalgos}</span></div>
+      <div class="resumen-stat"><span>⚖️ Balance (rep. − beb.)</span><span class="resumen-val" style="color:${j.hidalgo>=0?'#5ddf85':'#ff8080'}">${j.hidalgo>0?'+':''}${j.hidalgo}</span></div>`;
     rj.appendChild(card);
   });
 
