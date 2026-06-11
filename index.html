@@ -4,11 +4,9 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
 <title>🍺 Juego del Mundial 2026</title>
-<!-- Firebase -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, addDoc, getDocs, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, addDoc, getDocs, orderBy, query, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   const firebaseConfig = {
     apiKey: "AIzaSyDz6qL0HjC30lSbKtIAm9aB3DhQxr1PuxY",
     authDomain: "worldcup2026-31e36.firebaseapp.com",
@@ -17,144 +15,156 @@
     messagingSenderId: "604025314928",
     appId: "1:604025314928:web:a2532fc54512db94c7deb5"
   };
-
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   window._db = db;
-  window._fbFns = { doc, setDoc, getDoc, onSnapshot, collection, addDoc, getDocs, orderBy, query, serverTimestamp };
-  window._fbReady = true;
+  window._fbFns = { doc, setDoc, getDoc, onSnapshot, collection, addDoc, getDocs, orderBy, query, serverTimestamp, deleteDoc };
   document.dispatchEvent(new Event('fbready'));
 </script>
 <style>
   :root {
-    --verde: #1a6e3c; --verde-claro: #2d9e5c;
-    --dorado: #f0c040; --rojo: #c0392b;
-    --fondo: #0b1e13; --fondo2: #102819;
-    --card: #1c3a28; --card2: #243f2e;
-    --texto: #e8f5e9; --texto2: #a8d5b0;
-    --borde: #2e5e40; --shadow: 0 4px 20px rgba(0,0,0,0.5);
+    --verde:#1a6e3c; --verde-claro:#2d9e5c; --dorado:#f0c040; --rojo:#c0392b;
+    --fondo:#0b1e13; --fondo2:#102819; --card:#1c3a28; --card2:#243f2e;
+    --texto:#e8f5e9; --texto2:#a8d5b0; --borde:#2e5e40;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--fondo); color: var(--texto); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; overflow-x: hidden; }
-  header { background: linear-gradient(135deg, var(--verde) 0%, #0d4a28 100%); padding: 16px; text-align: center; border-bottom: 3px solid var(--dorado); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,0.6); }
-  header h1 { font-size: 1.5rem; color: var(--dorado); }
-  header p { font-size: 0.78rem; color: var(--texto2); margin-top: 2px; }
-  .screen { display: none; padding: 14px; max-width: 600px; margin: 0 auto; }
-  .screen.active { display: block; }
-  .card { background: var(--card); border: 1px solid var(--borde); border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
-  .card h2 { color: var(--dorado); font-size: 1.05rem; margin-bottom: 10px; }
-  .card h3 { color: var(--verde-claro); font-size: 0.9rem; margin-bottom: 8px; }
-  .btn { display: block; width: 100%; background: linear-gradient(135deg, var(--dorado), #d4a820); color: #0b1e13; border: none; border-radius: 10px; padding: 13px; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 10px; transition: transform 0.1s; }
-  .btn:active { transform: scale(0.97); }
-  .btn.verde { background: linear-gradient(135deg, var(--verde-claro), var(--verde)); color: white; }
-  .btn.gris { background: #2a3e2e; color: var(--texto2); font-weight: 500; }
-  .btn.rojo { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
-  .btn.pequeño { padding: 8px 12px; font-size: 0.82rem; display: inline-block; width: auto; }
-  .num-selector { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 10px 0; }
-  .num-btn { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--borde); background: var(--card2); color: var(--texto); font-size: 1.2rem; font-weight: 700; cursor: pointer; }
-  .num-btn.selected { background: var(--dorado); color: #0b1e13; border-color: var(--dorado); }
-  .grupo-header { background: var(--verde); color: white; padding: 5px 12px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 12px 0 6px; }
-  .partido-item { background: var(--card2); border: 1px solid var(--borde); border-radius: 10px; padding: 11px 13px; margin-bottom: 7px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-  .partido-item.selected { border-color: var(--dorado); background: #2a4030; }
-  .partido-item .flags { font-size: 1.3rem; }
-  .partido-item .teams { flex: 1; font-size: 0.88rem; font-weight: 600; }
-  .partido-item .check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--borde); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0; }
-  .partido-item.selected .check { background: var(--dorado); border-color: var(--dorado); color: #0b1e13; }
-  .player-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .player-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--verde); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
-  input[type=text], select { flex: 1; background: var(--card2); border: 1px solid var(--borde); border-radius: 8px; padding: 10px 12px; color: var(--texto); font-size: 0.9rem; width: 100%; margin-bottom: 6px; }
-  input[type=text]:focus, select:focus { outline: none; border-color: var(--dorado); }
-  select { appearance: none; -webkit-appearance: none; }
-  .asignacion-card { background: var(--card2); border: 1px solid var(--borde); border-radius: 12px; padding: 13px; margin-bottom: 10px; }
-  .jugador-nombre { font-size: 0.98rem; font-weight: 700; margin-bottom: 8px; }
-  .team-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--texto2); margin-bottom: 2px; }
-  .badge { display: inline-block; border-radius: 20px; padding: 2px 7px; font-size: 0.7rem; font-weight: 700; margin-right: 4px; }
-  .badge.portero { background: #1a3a5e; color: #80c0ff; }
-  .badge.defensa { background: #1a4e1a; color: #80ff80; }
-  .badge.centrocampista { background: #4e3a00; color: var(--dorado); }
-  .badge.delantero { background: #4e1a00; color: #ff9980; }
-  .badge.sorbo { background: #1a4a2e; color: #5ddf85; }
-  .badge.reparte { background: #3a2a00; color: var(--dorado); }
-  .badge.chupito { background: #4a0000; color: #ff8080; }
-  .regla-row { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid var(--borde); }
-  .regla-row:last-child { border-bottom: none; }
-  .regla-accion { flex: 1; font-size: 0.85rem; }
-  .regla-norma { font-size: 0.8rem; color: var(--dorado); font-weight: 600; text-align: right; flex-shrink: 0; max-width: 140px; }
-  .comodin-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--borde); }
-  .comodin-name { font-size: 0.88rem; font-weight: 600; }
-  .comodin-btns { display: flex; gap: 6px; align-items: center; }
-  .comodin-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--borde); background: var(--card2); color: var(--dorado); font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-  .comodin-btn.usado { background: #2a1a00; color: #555; }
-  .comodin-count { color: var(--texto2); font-size: 0.78rem; min-width: 38px; text-align: center; }
-  .var-display { text-align: center; font-size: 2.8rem; font-weight: 900; color: var(--dorado); font-variant-numeric: tabular-nums; padding: 16px 0; }
-  .var-label { text-align: center; color: var(--texto2); font-size: 0.82rem; margin-bottom: 8px; }
-  .gol-counter { display: flex; align-items: center; justify-content: space-between; background: var(--card2); border-radius: 10px; padding: 11px 14px; margin-bottom: 8px; border: 1px solid var(--borde); }
-  .gol-num { font-size: 1.7rem; font-weight: 900; color: var(--dorado); min-width: 34px; text-align: center; }
-  .gol-info { flex: 1; padding: 0 10px; }
-  .gol-info .titulo { font-size: 0.88rem; font-weight: 600; }
-  .gol-info .subtitulo { font-size: 0.73rem; color: var(--texto2); }
-  .search-input { width: 100%; background: var(--card2); border: 1px solid var(--borde); border-radius: 10px; padding: 10px 13px; color: var(--texto); font-size: 0.88rem; margin-bottom: 8px; }
-  .search-input:focus { outline: none; border-color: var(--dorado); }
-  .nav-tabs { display: flex; gap: 4px; overflow-x: auto; padding: 8px 14px 0; background: var(--fondo2); border-bottom: 2px solid var(--borde); scrollbar-width: none; }
-  .nav-tabs::-webkit-scrollbar { display: none; }
-  .nav-tab { padding: 7px 12px; border-radius: 8px 8px 0 0; background: transparent; color: var(--texto2); border: none; cursor: pointer; font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
-  .nav-tab.active { background: var(--card); color: var(--dorado); border-bottom: 2px solid var(--dorado); }
-  #toast { position: fixed; bottom: 74px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--dorado); color: #0b1e13; padding: 9px 20px; border-radius: 20px; font-weight: 700; font-size: 0.88rem; opacity: 0; transition: opacity 0.3s, transform 0.3s; z-index: 999; pointer-events: none; max-width: 90vw; text-align: center; }
-  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--fondo2); border-top: 2px solid var(--borde); display: flex; z-index: 50; max-width: 600px; margin: 0 auto; }
-  .bottom-nav-btn { flex: 1; padding: 8px 4px; background: none; border: none; color: var(--texto2); cursor: pointer; text-align: center; font-size: 0.6rem; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-  .bottom-nav-btn .icon { font-size: 1.2rem; }
-  .bottom-nav-btn.active { color: var(--dorado); }
-  body { padding-bottom: 62px; }
-  .hint { font-size: 0.76rem; color: var(--texto2); margin-top: 5px; line-height: 1.4; }
-  .section-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--texto2); margin: 14px 0 7px; }
-  .vs-text { color: var(--verde-claro); font-size: 0.73rem; padding: 0 3px; }
-  .alerta-box { background: #3a0e0e; border: 1px solid #8b2020; border-radius: 10px; padding: 11px 13px; margin-bottom: 8px; }
-  .alerta-box p { font-size: 0.83rem; color: #ffaaaa; }
-  /* YO screen — contador personal */
-  .stat-counter { display: flex; align-items: center; justify-content: space-between; background: var(--card2); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; border: 1px solid var(--borde); }
-  .stat-label { font-size: 0.85rem; font-weight: 600; flex: 1; }
-  .stat-sublabel { font-size: 0.7rem; color: var(--texto2); }
-  .stat-num { font-size: 2rem; font-weight: 900; color: var(--dorado); min-width: 42px; text-align: center; }
-  .counter-btn { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--borde); background: var(--card); color: white; font-size: 1.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700; }
-  .counter-btn.plus { background: var(--verde-claro); }
-  .counter-btn.minus { background: #333; color: #999; }
-  /* MARCADOR screen */
-  .marcador-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--card2); border-radius: 10px; margin-bottom: 7px; border: 1px solid var(--borde); }
-  .marcador-nombre { font-size: 0.88rem; font-weight: 700; flex: 1; }
-  .marcador-stat { text-align: center; min-width: 36px; }
-  .marcador-stat .val { font-size: 1.1rem; font-weight: 900; color: var(--dorado); display: block; }
-  .marcador-stat .lbl { font-size: 0.6rem; color: var(--texto2); }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--fondo);color:var(--texto);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden;padding-bottom:64px}
+  header{background:linear-gradient(135deg,var(--verde) 0%,#0d4a28 100%);padding:14px 16px;text-align:center;border-bottom:3px solid var(--dorado);position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.6)}
+  header h1{font-size:1.4rem;color:var(--dorado)}
+  header p{font-size:0.76rem;color:var(--texto2);margin-top:2px}
+  .screen{display:none;padding:14px;max-width:600px;margin:0 auto}
+  .screen.active{display:block}
+  .card{background:var(--card);border:1px solid var(--borde);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+  .card h2{color:var(--dorado);font-size:1.05rem;margin-bottom:10px}
+  .card h3{color:var(--verde-claro);font-size:0.9rem;margin-bottom:8px}
+  .btn{display:block;width:100%;background:linear-gradient(135deg,var(--dorado),#d4a820);color:#0b1e13;border:none;border-radius:10px;padding:13px;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:10px;transition:transform .1s}
+  .btn:active{transform:scale(.97)}
+  .btn.verde{background:linear-gradient(135deg,var(--verde-claro),var(--verde));color:#fff}
+  .btn.gris{background:#2a3e2e;color:var(--texto2);font-weight:500}
+  .btn.rojo{background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff}
+  .btn.pequeño{padding:8px 12px;font-size:.82rem;display:inline-block;width:auto}
+  .hint{font-size:.76rem;color:var(--texto2);margin-top:5px;line-height:1.4}
+  /* INICIO */
+  .inicio-opcion{background:var(--card2);border:2px solid var(--borde);border-radius:16px;padding:22px 18px;margin-bottom:12px;cursor:pointer;text-align:center;transition:border-color .2s}
+  .inicio-opcion:active{border-color:var(--dorado)}
+  .inicio-opcion .icon{font-size:2.4rem;display:block;margin-bottom:8px}
+  .inicio-opcion h3{font-size:1rem;font-weight:700;color:var(--dorado);margin-bottom:4px}
+  .inicio-opcion p{font-size:.8rem;color:var(--texto2)}
+  /* CÓDIGO SALA */
+  .codigo-display{text-align:center;background:linear-gradient(135deg,#2a4030,#1c3a28);border:2px solid var(--dorado);border-radius:16px;padding:20px;margin:12px 0}
+  .codigo-display .label{font-size:.75rem;color:var(--texto2);text-transform:uppercase;letter-spacing:1px}
+  .codigo-display .code{font-size:3rem;font-weight:900;color:var(--dorado);letter-spacing:8px;margin:6px 0}
+  .codigo-display .sub{font-size:.78rem;color:var(--texto2)}
+  .code-input{background:var(--card2);border:2px solid var(--borde);border-radius:12px;padding:16px;color:var(--texto);font-size:2rem;font-weight:900;letter-spacing:6px;text-align:center;width:100%;text-transform:uppercase;margin:10px 0}
+  .code-input:focus{outline:none;border-color:var(--dorado)}
+  /* SETUP */
+  .num-selector{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0}
+  .num-btn{width:50px;height:50px;border-radius:50%;border:2px solid var(--borde);background:var(--card2);color:var(--texto);font-size:1.2rem;font-weight:700;cursor:pointer}
+  .num-btn.selected{background:var(--dorado);color:#0b1e13;border-color:var(--dorado)}
+  .grupo-header{background:var(--verde);color:#fff;padding:5px 12px;border-radius:6px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:12px 0 6px}
+  .partido-item{background:var(--card2);border:1px solid var(--borde);border-radius:10px;padding:11px 13px;margin-bottom:7px;cursor:pointer;display:flex;align-items:center;gap:10px}
+  .partido-item.selected{border-color:var(--dorado);background:#2a4030}
+  .partido-item .flags{font-size:1.3rem}
+  .partido-item .teams{flex:1;font-size:.88rem;font-weight:600}
+  .partido-item .check{width:22px;height:22px;border-radius:50%;border:2px solid var(--borde);display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0}
+  .partido-item.selected .check{background:var(--dorado);border-color:var(--dorado);color:#0b1e13}
+  .player-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .player-avatar{width:34px;height:34px;border-radius:50%;background:var(--verde);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0}
+  input[type=text]{flex:1;background:var(--card2);border:1px solid var(--borde);border-radius:8px;padding:10px 12px;color:var(--texto);font-size:.9rem;width:100%;margin-bottom:6px}
+  input[type=text]:focus{outline:none;border-color:var(--dorado)}
+  .search-input{width:100%;background:var(--card2);border:1px solid var(--borde);border-radius:10px;padding:10px 13px;color:var(--texto);font-size:.88rem;margin-bottom:8px}
+  .search-input:focus{outline:none;border-color:var(--dorado)}
+  /* ASIGNACION */
+  .asignacion-card{background:var(--card2);border:1px solid var(--borde);border-radius:12px;padding:13px;margin-bottom:10px}
+  .jugador-nombre{font-size:.98rem;font-weight:700;margin-bottom:8px}
+  .team-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.5px;color:var(--texto2);margin-bottom:2px}
+  .badge{display:inline-block;border-radius:20px;padding:2px 7px;font-size:.7rem;font-weight:700;margin-right:4px}
+  .badge.portero{background:#1a3a5e;color:#80c0ff}
+  .badge.defensa{background:#1a4e1a;color:#80ff80}
+  .badge.centrocampista{background:#4e3a00;color:var(--dorado)}
+  .badge.delantero{background:#4e1a00;color:#ff9980}
+  .badge.sorbo{background:#1a4a2e;color:#5ddf85}
+  .badge.reparte{background:#3a2a00;color:var(--dorado)}
+  .badge.chupito{background:#4a0000;color:#ff8080}
+  /* BOTTOM NAV */
+  .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--fondo2);border-top:2px solid var(--borde);display:flex;z-index:50;max-width:600px;margin:0 auto}
+  .bottom-nav-btn{flex:1;padding:8px 2px;background:none;border:none;color:var(--texto2);cursor:pointer;text-align:center;font-size:.58rem;display:flex;flex-direction:column;align-items:center;gap:2px}
+  .bottom-nav-btn .icon{font-size:1.2rem}
+  .bottom-nav-btn.active{color:var(--dorado)}
+  /* YO */
+  .selector-yo{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .yo-btn{padding:8px 14px;border-radius:20px;border:2px solid var(--borde);background:var(--card2);color:var(--texto);font-size:.85rem;font-weight:600;cursor:pointer}
+  .yo-btn.selected{border-color:var(--dorado);color:var(--dorado);background:#2a1a00}
+  .stat-counter{display:flex;align-items:center;justify-content:space-between;background:var(--card2);border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--borde)}
+  .stat-label{font-size:.85rem;font-weight:600;flex:1}
+  .stat-sublabel{font-size:.7rem;color:var(--texto2)}
+  .stat-num{font-size:2rem;font-weight:900;color:var(--dorado);min-width:42px;text-align:center}
+  .counter-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--borde);background:var(--card);color:#fff;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .counter-btn.plus{background:var(--verde-claro)}
+  .counter-btn.minus{background:#333;color:#999}
+  /* MARCADOR */
+  .marcador-row{display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--card2);border-radius:10px;margin-bottom:7px;border:1px solid var(--borde)}
+  .marcador-nombre{font-size:.85rem;font-weight:700;flex:1}
+  .marcador-stat{text-align:center;min-width:32px}
+  .marcador-stat .val{font-size:1rem;font-weight:900;color:var(--dorado);display:block}
+  .marcador-stat .lbl{font-size:.58rem;color:var(--texto2)}
+  /* REGLAS */
+  .regla-row{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--borde)}
+  .regla-row:last-child{border-bottom:none}
+  .regla-accion{flex:1;font-size:.85rem}
+  .regla-norma{font-size:.8rem;color:var(--dorado);font-weight:600;text-align:right;flex-shrink:0;max-width:140px}
+  /* COMODINES */
+  .comodin-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--borde)}
+  .comodin-name{font-size:.88rem;font-weight:600}
+  .comodin-btns{display:flex;gap:6px;align-items:center}
+  .comodin-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--borde);background:var(--card2);color:var(--dorado);font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .comodin-btn.usado{background:#2a1a00;color:#555}
+  .comodin-count{color:var(--texto2);font-size:.78rem;min-width:38px;text-align:center}
+  /* VAR */
+  .var-display{text-align:center;font-size:2.8rem;font-weight:900;color:var(--dorado);padding:16px 0}
+  .var-label{text-align:center;color:var(--texto2);font-size:.82rem;margin-bottom:8px}
+  /* CHUPITOS */
+  .gol-counter{display:flex;align-items:center;justify-content:space-between;background:var(--card2);border-radius:10px;padding:11px 14px;margin-bottom:8px;border:1px solid var(--borde)}
+  .gol-num{font-size:1.7rem;font-weight:900;color:var(--dorado);min-width:34px;text-align:center}
+  .gol-info{flex:1;padding:0 10px}
+  .gol-info .titulo{font-size:.88rem;font-weight:600}
+  .gol-info .subtitulo{font-size:.73rem;color:var(--texto2)}
+  .alerta-box{background:#3a0e0e;border:1px solid #8b2020;border-radius:10px;padding:11px 13px;margin-bottom:8px}
+  .alerta-box p{font-size:.83rem;color:#ffaaaa}
+  /* RESUMEN */
+  .resumen-stat{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--borde);font-size:.85rem}
+  .resumen-stat:last-child{border-bottom:none}
+  .resumen-val{font-weight:700;color:var(--dorado)}
+  .winner-banner{background:linear-gradient(135deg,#4e3a00,#2a1a00);border:2px solid var(--dorado);border-radius:14px;padding:16px;text-align:center;margin-bottom:12px}
+  .winner-banner .crown{font-size:2.5rem;display:block}
+  .winner-banner .title{font-size:.75rem;color:var(--texto2);text-transform:uppercase;letter-spacing:1px}
+  .winner-banner .name{font-size:1.4rem;font-weight:900;color:var(--dorado)}
   /* HISTORIAL */
-  .historial-card { background: var(--card2); border: 1px solid var(--borde); border-radius: 12px; padding: 13px; margin-bottom: 10px; }
-  .historial-fecha { font-size: 0.7rem; color: var(--texto2); margin-bottom: 4px; }
-  .historial-partido { font-size: 0.95rem; font-weight: 700; color: var(--dorado); margin-bottom: 8px; }
-  .historial-jugador { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--borde); font-size: 0.82rem; }
-  .historial-jugador:last-child { border-bottom: none; }
-  /* RESUMEN FINAL */
-  .resumen-stat { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--borde); font-size: 0.85rem; }
-  .resumen-stat:last-child { border-bottom: none; }
-  .resumen-val { font-weight: 700; color: var(--dorado); }
-  .winner-banner { background: linear-gradient(135deg, #4e3a00, #2a1a00); border: 2px solid var(--dorado); border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 12px; }
-  .winner-banner .crown { font-size: 2.5rem; display: block; }
-  .winner-banner .title { font-size: 0.75rem; color: var(--texto2); text-transform: uppercase; letter-spacing: 1px; }
-  .winner-banner .name { font-size: 1.4rem; font-weight: 900; color: var(--dorado); }
-  .fb-status { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--texto2); margin-bottom: 8px; }
-  .fb-dot { width: 8px; height: 8px; border-radius: 50%; background: #888; flex-shrink: 0; }
-  .fb-dot.ok { background: #2d9e5c; }
-  .fb-dot.err { background: #e74c3c; }
-  @keyframes bounce { 0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)} }
-  .animate-bounce { animation: bounce 0.4s ease; }
-  .selector-yo { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
-  .yo-btn { padding: 8px 14px; border-radius: 20px; border: 2px solid var(--borde); background: var(--card2); color: var(--texto); font-size: 0.85rem; font-weight: 600; cursor: pointer; }
-  .yo-btn.selected { border-color: var(--dorado); color: var(--dorado); background: #2a1a00; }
-  .loading { text-align: center; padding: 30px; color: var(--texto2); font-size: 0.9rem; }
+  .historial-card{background:var(--card2);border:1px solid var(--borde);border-radius:12px;padding:13px;margin-bottom:10px}
+  .historial-fecha{font-size:.7rem;color:var(--texto2);margin-bottom:4px}
+  .historial-partido{font-size:.95rem;font-weight:700;color:var(--dorado);margin-bottom:8px}
+  .historial-jugador{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--borde);font-size:.82rem}
+  .historial-jugador:last-child{border-bottom:none}
+  /* FB STATUS */
+  .fb-status{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--texto2);margin-bottom:8px}
+  .fb-dot{width:8px;height:8px;border-radius:50%;background:#888;flex-shrink:0}
+  .fb-dot.ok{background:#2d9e5c}
+  .fb-dot.err{background:#e74c3c}
+  /* MISC */
+  .loading{text-align:center;padding:30px;color:var(--texto2);font-size:.9rem}
+  .vs-text{color:var(--verde-claro);font-size:.73rem;padding:0 3px}
+  @keyframes bounce{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+  .animate-bounce{animation:bounce .4s ease}
+  .espera-box{text-align:center;padding:24px 16px}
+  .espera-box .big{font-size:3rem;display:block;margin-bottom:8px}
+  .espera-box h3{color:var(--dorado);font-size:1.1rem;margin-bottom:6px}
+  .espera-box p{font-size:.82rem;color:var(--texto2)}
 </style>
 </head>
 <body>
 <header>
   <h1>⚽ Juego del Mundial 2026 🍺</h1>
-  <p id="header-sub">Configura tu partido y empieza a jugar</p>
+  <p id="header-sub">Crea o únete a una partida</p>
 </header>
 
 <div class="bottom-nav" id="bottomNav" style="display:none">
@@ -167,8 +177,44 @@
 
 <div id="toast"></div>
 
-<!-- SETUP -->
-<div class="screen active" id="screen-setup">
+<!-- ===== INICIO ===== -->
+<div class="screen active" id="screen-inicio">
+  <div style="margin-top:20px;text-align:center;margin-bottom:16px">
+    <div style="font-size:3rem">⚽🍺</div>
+    <h2 style="color:var(--dorado);margin-top:6px">Mundial 2026</h2>
+    <p class="hint" style="margin-top:4px">¿Quién crea la sala y quién se une?</p>
+  </div>
+  <div class="inicio-opcion" onclick="showScreen('screen-setup')">
+    <span class="icon">🏟️</span>
+    <h3>Crear partida</h3>
+    <p>Elige el partido, sortea los jugadores y genera un código para tus amigos</p>
+  </div>
+  <div class="inicio-opcion" onclick="showScreen('screen-unirse')">
+    <span class="icon">🔑</span>
+    <h3>Unirse a una partida</h3>
+    <p>Introduce el código de 4 letras que te ha dado el creador</p>
+  </div>
+  <div class="inicio-opcion" onclick="showScreen2('screen-historial')" style="opacity:0.8">
+    <span class="icon">📚</span>
+    <h3>Historial</h3>
+    <p>Ver partidos anteriores guardados</p>
+  </div>
+</div>
+
+<!-- ===== UNIRSE ===== -->
+<div class="screen" id="screen-unirse">
+  <div class="card" style="margin-top:16px">
+    <h2>🔑 Unirse a una partida</h2>
+    <p class="hint">Introduce el código de 4 letras que tiene el creador de la sala.</p>
+    <input type="text" class="code-input" id="codigoInput" maxlength="4" placeholder="XXXX" oninput="this.value=this.value.toUpperCase()"/>
+    <button class="btn" onclick="unirseASala()">🚪 Entrar a la sala</button>
+    <button class="btn gris" onclick="showScreen('screen-inicio')" style="margin-top:8px">← Volver</button>
+  </div>
+  <div id="unirse-error" style="display:none" class="alerta-box"><p id="unirse-error-msg"></p></div>
+</div>
+
+<!-- ===== SETUP (CREAR) ===== -->
+<div class="screen" id="screen-setup">
   <div class="card" style="margin-top:10px">
     <h2>🏆 ¿Qué partido vais a ver?</h2>
     <input type="text" class="search-input" id="matchSearch" placeholder="🔍 Buscar equipo..." oninput="filterMatches()" style="margin-top:8px"/>
@@ -180,50 +226,74 @@
     <p class="hint">Cada persona recibe un jugador de cada equipo sorteado aleatoriamente.</p>
   </div>
   <div class="card" id="playerNamesCard" style="display:none">
-    <h2>✏️ Nombres</h2>
+    <h2>✏️ Nombres de todos</h2>
     <div id="playerNameInputs"></div>
   </div>
   <div id="sortearBtn" style="display:none">
-    <button class="btn" onclick="sortearJugadores()">🎲 ¡Sortear jugadores!</button>
+    <button class="btn" onclick="sortearJugadores()">🎲 ¡Sortear y crear sala!</button>
   </div>
+  <button class="btn gris" onclick="showScreen('screen-inicio')" style="margin-top:8px">← Volver</button>
 </div>
 
-<!-- SORTEO -->
+<!-- ===== SALA: ESPERANDO (amigos que se unen ven esto mientras no empieza) ===== -->
+<div class="screen" id="screen-sala-espera">
+  <div class="card" style="margin-top:16px">
+    <div class="espera-box">
+      <span class="big">⏳</span>
+      <h3>Sala creada — esperando al anfitrión</h3>
+      <p>El partido aún no ha empezado. En cuanto el creador pulse "¡Empieza el partido!" entrarás automáticamente.</p>
+    </div>
+    <div class="codigo-display">
+      <div class="label">Código de sala</div>
+      <div class="code" id="espera-codigo">----</div>
+      <div class="sub">Comparte este código con tus amigos</div>
+    </div>
+    <div id="espera-asignacion" style="margin-top:10px"></div>
+  </div>
+  <button class="btn gris" onclick="reiniciarJuego()" style="margin-top:8px">← Salir de la sala</button>
+</div>
+
+<!-- ===== SORTEO ===== -->
 <div class="screen" id="screen-sorteo">
   <div class="card" style="margin-top:10px">
     <h2 style="text-align:center">🎲 ¡Resultado del sorteo!</h2>
     <p class="hint" style="text-align:center">Cada persona tiene un jugador de cada equipo.</p>
+  </div>
+  <div class="codigo-display">
+    <div class="label">Código de sala — comparte con tus amigos</div>
+    <div class="code" id="sala-codigo">----</div>
+    <div class="sub">Ellos entran en la app y pulsan "Unirse a una partida"</div>
   </div>
   <div id="sorteoResultado"></div>
   <button class="btn" onclick="empezarJuego()">⚽ ¡Empieza el partido!</button>
   <button class="btn gris" onclick="resortear()" style="margin-top:8px">🔄 Volver a sortear</button>
 </div>
 
-<!-- JUGADORES -->
+<!-- ===== JUGADORES ===== -->
 <div class="screen" id="screen-jugadores">
   <div id="playerCards"></div>
 </div>
 
-<!-- YO -->
+<!-- ===== YO ===== -->
 <div class="screen" id="screen-yo">
   <div class="card" style="margin-top:10px">
     <h2>🍺 ¿Quién eres?</h2>
     <p class="hint">Selecciona tu nombre para gestionar tus bebidas.</p>
     <div class="selector-yo" id="selectorYo"></div>
-    <div class="fb-status" id="fbStatus"><div class="fb-dot" id="fbDot"></div><span id="fbText">Conectando...</span></div>
+    <div class="fb-status"><div class="fb-dot" id="fbDot"></div><span id="fbText">Conectando...</span></div>
   </div>
   <div id="yoStats" style="display:none">
     <div class="card">
       <h2 id="yo-titulo">Tus stats</h2>
-      <div id="yo-jugadores-info" style="margin-bottom:10px;font-size:0.8rem;color:var(--texto2)"></div>
+      <div id="yo-jugadores-info" style="margin-bottom:10px;font-size:.8rem;color:var(--texto2)"></div>
       <div class="stat-counter">
-        <div><div class="stat-label">🍺 Tragos bebidos</div><div class="stat-sublabel">Sorbos que has tomado tú</div></div>
+        <div><div class="stat-label">🍺 Tragos bebidos</div><div class="stat-sublabel">Sorbos que has tomado</div></div>
         <button class="counter-btn minus" onclick="cambiarStat('bebidos',-1)">−</button>
-        <div class="stat-num animate-bounce" id="stat-bebidos">0</div>
+        <div class="stat-num" id="stat-bebidos">0</div>
         <button class="counter-btn plus" onclick="cambiarStat('bebidos',1)">+</button>
       </div>
       <div class="stat-counter">
-        <div><div class="stat-label">🎁 Tragos repartidos</div><div class="stat-sublabel">Sorbos que has dado a otros</div></div>
+        <div><div class="stat-label">🎁 Tragos repartidos</div><div class="stat-sublabel">Sorbos que has dado</div></div>
         <button class="counter-btn minus" onclick="cambiarStat('repartidos',-1)">−</button>
         <div class="stat-num" id="stat-repartidos">0</div>
         <button class="counter-btn plus" onclick="cambiarStat('repartidos',1)">+</button>
@@ -235,63 +305,62 @@
         <button class="counter-btn plus" onclick="cambiarStat('chupitos',1)">+</button>
       </div>
       <div class="stat-counter">
-        <div><div class="stat-label">💧 Hidalgos de copa</div><div class="stat-sublabel">Copas recibidas o repartidas</div></div>
+        <div><div class="stat-label">💧 Hidalgos de copa</div><div class="stat-sublabel">Copas recibidas o dadas</div></div>
         <button class="counter-btn minus" onclick="cambiarStat('hidalgos',-1)">−</button>
         <div class="stat-num" id="stat-hidalgos">0</div>
         <button class="counter-btn plus" onclick="cambiarStat('hidalgos',1)">+</button>
       </div>
       <div style="background:var(--fondo2);border-radius:10px;padding:10px 14px;margin-top:4px;display:flex;justify-content:space-between;align-items:center">
-        <div><div style="font-size:0.82rem;font-weight:600">⚖️ Balance de tragos</div><div class="stat-sublabel">Repartidos − Bebidos</div></div>
+        <div><div style="font-size:.82rem;font-weight:600">⚖️ Balance de tragos</div><div class="stat-sublabel">Repartidos − Bebidos</div></div>
         <div class="stat-num" id="stat-hidalgo" style="color:#5ddf85;font-size:1.5rem">0</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- MARCADOR -->
+<!-- ===== MARCADOR ===== -->
 <div class="screen" id="screen-marcador">
   <div class="card" style="margin-top:10px">
     <h2>📊 Marcador en vivo</h2>
-    <p class="hint">Stats de todos los jugadores en tiempo real.</p>
+    <p class="hint">Stats de todos en tiempo real.</p>
   </div>
   <div id="marcadorLista"><div class="loading">Cargando...</div></div>
 </div>
 
-<!-- REGLAS -->
+<!-- ===== REGLAS ===== -->
 <div class="screen" id="screen-reglas">
   <div class="card" style="margin-top:10px">
     <h2>📋 Reglas básicas</h2>
-    <div class="regla-row"><div class="regla-accion">⚽ Pase completado de tu jugador</div><div class="regla-norma"><span class="badge sorbo">1 sorbo tú</span></div></div>
-    <div class="regla-row"><div class="regla-accion">❌ Pase fallado</div><div class="regla-norma"><span class="badge sorbo">Bebe el de tu derecha</span></div></div>
-    <div class="regla-row"><div class="regla-accion">🎯 Disparo de tu jugador</div><div class="regla-norma"><span class="badge sorbo">Todos 1 sorbo</span></div></div>
+    <div class="regla-row"><div class="regla-accion">⚽ Pase completado</div><div class="regla-norma"><span class="badge sorbo">1 sorbo tú</span></div></div>
+    <div class="regla-row"><div class="regla-accion">❌ Pase fallado</div><div class="regla-norma"><span class="badge sorbo">Bebe tu derecha</span></div></div>
+    <div class="regla-row"><div class="regla-accion">🎯 Disparo</div><div class="regla-norma"><span class="badge sorbo">Todos 1 sorbo</span></div></div>
     <div class="regla-row"><div class="regla-accion">🥅 Disparo a puerta</div><div class="regla-norma"><span class="badge reparte">Repartes 3</span></div></div>
     <div class="regla-row"><div class="regla-accion">⚽ GOL</div><div class="regla-norma"><span class="badge chupito">Todos chupito</span></div></div>
     <div class="regla-row"><div class="regla-accion">🏃 Asistencia</div><div class="regla-norma"><span class="badge reparte">Repartes 5</span></div></div>
-    <div class="regla-row"><div class="regla-accion">🟨 Tarjeta amarilla</div><div class="regla-norma"><span class="badge sorbo">3 sorbos tú</span></div></div>
-    <div class="regla-row"><div class="regla-accion">🟥 Tarjeta roja</div><div class="regla-norma"><span class="badge chupito">Acabas tu bebida</span></div></div>
+    <div class="regla-row"><div class="regla-accion">🟨 Amarilla</div><div class="regla-norma"><span class="badge sorbo">3 sorbos tú</span></div></div>
+    <div class="regla-row"><div class="regla-accion">🟥 Roja</div><div class="regla-norma"><span class="badge chupito">Acabas bebida</span></div></div>
     <div class="regla-row"><div class="regla-accion">🏳️ Fuera de juego</div><div class="regla-norma"><span class="badge sorbo">2 sorbos tú</span></div></div>
     <div class="regla-row"><div class="regla-accion">⛔ Falta cometida</div><div class="regla-norma"><span class="badge sorbo">2 sorbos tú</span></div></div>
     <div class="regla-row"><div class="regla-accion">🩹 Falta recibida</div><div class="regla-norma"><span class="badge reparte">Repartes 2</span></div></div>
-    <div class="regla-row"><div class="regla-accion">🚩 Córner provocado</div><div class="regla-norma"><span class="badge reparte">Repartes 3</span></div></div>
-    <div class="regla-row"><div class="regla-accion">🧤 Parada del portero</div><div class="regla-norma"><span class="badge reparte">Repartes 3</span></div></div>
+    <div class="regla-row"><div class="regla-accion">🚩 Córner</div><div class="regla-norma"><span class="badge reparte">Repartes 3</span></div></div>
+    <div class="regla-row"><div class="regla-accion">🧤 Parada portero</div><div class="regla-norma"><span class="badge reparte">Repartes 3</span></div></div>
     <div class="regla-row"><div class="regla-accion">🧤 ¡Paradón!</div><div class="regla-norma"><span class="badge reparte">Repartes 5</span></div></div>
   </div>
   <div class="card">
-    <h2>⚡ Normas especiales</h2>
-    <div class="regla-row"><div class="regla-accion">📺 VAR — silencio total. Si cambia: todos beben. Cada 30s de espera: 1 sorbo</div></div>
+    <h2>⚡ Especiales</h2>
+    <div class="regla-row"><div class="regla-accion">📺 VAR — silencio. Si cambia: todos beben. Cada 30s: 1 sorbo</div></div>
     <div class="regla-row"><div class="regla-accion">🤣 Celebración cringe → todos 1 sorbo</div></div>
-    <div class="regla-row"><div class="regla-accion">🎭 Jugador exagerando caída → dueño 2 sorbos</div></div>
-    <div class="regla-row"><div class="regla-accion">🎙️ Comentarista dice "intensidad", "transición", "bloque bajo" o "partido muy táctico" → todos 1 sorbo</div></div>
-    <div class="regla-row"><div class="regla-accion">🏅 MVP descanso — dueño reparte 5 sorbos</div></div>
-    <div class="regla-row"><div class="regla-accion">🔄 Jugador sustituido → puedes coger al suplente pagando 3 sorbos</div></div>
+    <div class="regla-row"><div class="regla-accion">🎭 Exagerando caída → dueño 2 sorbos</div></div>
+    <div class="regla-row"><div class="regla-accion">🎙️ "intensidad / transición / bloque bajo / partido muy táctico" → todos 1 sorbo</div></div>
+    <div class="regla-row"><div class="regla-accion">🏅 MVP descanso → dueño reparte 5</div></div>
+    <div class="regla-row"><div class="regla-accion">🔄 Sustitución → coges suplente pagando 3 sorbos</div></div>
   </div>
-  <div class="card">
-    <h2>🛡️ Límites</h2>
-    <div class="regla-row"><div class="regla-accion">Máx. 3 sorbos/persona/minuto · 1 comodín por parte · Máx. 3 chupitos (luego goles = 3 sorbos) · Agua en el descanso · Comida obligatoria · Quien quiera parar, para.</div></div>
+  <div class="card"><h2>🛡️ Límites</h2>
+    <div class="regla-row"><div class="regla-accion">Máx 3 sorbos/min · 1 comodín/parte · Máx 3 chupitos · Agua en descanso · Comida obligatoria · Si alguien quiere parar, para.</div></div>
   </div>
 </div>
 
-<!-- EXTRA -->
+<!-- ===== EXTRA ===== -->
 <div class="screen" id="screen-extra">
   <div class="card" style="margin-top:10px">
     <h2>📺 Temporizador VAR</h2>
@@ -307,49 +376,46 @@
     <div class="gol-counter">
       <button onclick="cambiarChupitosGlobal(-1)" style="background:none;border:none;color:var(--texto);font-size:1.4rem;cursor:pointer;padding:4px 10px">−</button>
       <div class="gol-info"><div class="titulo">Chupitos del partido</div><div class="subtitulo" id="chupito-status">Quedan 3 de 3</div></div>
-      <div class="gol-num animate-bounce" id="chupito-count">0</div>
+      <div class="gol-num" id="chupito-count">0</div>
       <button onclick="cambiarChupitosGlobal(1)" style="background:none;border:none;color:var(--dorado);font-size:1.4rem;cursor:pointer;padding:4px 10px">+</button>
     </div>
-    <div id="chupito-alerta" class="alerta-box" style="display:none"><p>🚨 Límite alcanzado. Goles = <strong>3 sorbos</strong></p></div>
+    <div id="chupito-alerta" class="alerta-box" style="display:none"><p>🚨 Límite. Goles = <strong>3 sorbos</strong></p></div>
   </div>
   <div class="card">
     <h2>🃏 Comodines</h2>
     <div class="card" style="margin-bottom:8px"><h3>Primera parte</h3><div id="comodinesPrimera"></div></div>
     <div class="card"><h3>Segunda parte</h3><div id="comodinesSegunda"></div></div>
   </div>
+  <div class="card"><h2>🏅 MVP del descanso</h2><div id="mvp-lista"></div></div>
   <div class="card">
-    <h2>🏅 MVP del descanso</h2>
-    <div id="mvp-lista"></div>
-  </div>
-  <div class="card">
-    <button class="btn rojo" onclick="terminarPartido()">🏁 Terminar partido y ver resumen</button>
+    <button class="btn rojo" onclick="terminarPartido()">🏁 Terminar partido</button>
     <button class="btn gris" onclick="reiniciarJuego()" style="margin-top:8px">🔁 Nueva partida</button>
   </div>
 </div>
 
-<!-- RESUMEN FINAL -->
+<!-- ===== RESUMEN ===== -->
 <div class="screen" id="screen-resumen">
   <div class="card" style="margin-top:10px">
     <h2 style="text-align:center">🏁 Resumen del partido</h2>
-    <div id="resumen-partido-info" style="text-align:center;font-size:0.85rem;color:var(--texto2);margin-bottom:8px"></div>
+    <div id="resumen-partido-info" style="text-align:center;font-size:.85rem;color:var(--texto2);margin-bottom:8px"></div>
   </div>
   <div id="resumen-winner"></div>
   <div id="resumen-jugadores"></div>
   <div class="card">
-    <div class="fb-status" id="resumenFbStatus"><div class="fb-dot" id="resumenFbDot"></div><span id="resumenFbText">Guardando en Firebase...</span></div>
-    <button class="btn" onclick="showTab('historial'); showScreen2('screen-historial')">📚 Ver historial de partidos</button>
+    <div class="fb-status"><div class="fb-dot" id="resumenFbDot"></div><span id="resumenFbText">Guardando...</span></div>
+    <button class="btn" onclick="showScreen2('screen-historial')">📚 Ver historial</button>
     <button class="btn gris" onclick="reiniciarJuego()" style="margin-top:8px">🔁 Nueva partida</button>
   </div>
 </div>
 
-<!-- HISTORIAL -->
+<!-- ===== HISTORIAL ===== -->
 <div class="screen" id="screen-historial">
   <div class="card" style="margin-top:10px">
     <h2>📚 Historial de partidos</h2>
-    <p class="hint">Todos los partidos jugados, guardados en Firebase.</p>
+    <p class="hint">Todos los partidos guardados en Firebase.</p>
   </div>
-  <div id="historialLista"><div class="loading">Cargando historial...</div></div>
-  <button class="btn gris" onclick="reiniciarJuego()" style="margin-top:8px">🔁 Nueva partida</button>
+  <div id="historialLista"><div class="loading">Cargando...</div></div>
+  <button class="btn gris" onclick="showScreen('screen-inicio')" style="margin-top:8px">← Volver</button>
 </div>
 
 <script>
@@ -985,61 +1051,95 @@ const PLANTILLAS = {
   ]
 };
 
+
 // ============================================================
-// ============================================================
-//  STATE
+//  CONSTANTS & STATE
 // ============================================================
 const COLORS = ['#2d9e5c','#3a7bd5','#e84393','#f39c12','#9b59b6','#1abc9c','#e74c3c','#f1c40f','#16a085','#8e44ad'];
-function playerColor(i) { return COLORS[i % COLORS.length]; }
+function playerColor(i){ return COLORS[i%COLORS.length]; }
 
 let state = {
-  partido: null, numJugadores: 0, nombres: [], asignaciones: [],
-  chupitos: 0, comodines: {},
-  varRunning: false, varSeconds: 0, varInterval: null, varLastAlert: 0,
-  yo: null, // nombre del jugador seleccionado en pestaña Yo
-  sessionId: null, // ID de la sesión en Firebase
-  stats: {}, // {nombre: {bebidos, repartidos, chupitos}}
-  unsubStats: null, // Firebase listener
+  partido:null, numJugadores:0, nombres:[], asignaciones:[],
+  chupitos:0, comodines:{},
+  varRunning:false, varSeconds:0, varInterval:null, varLastAlert:0,
+  yo:null,
+  salaId:null,       // ej: "MXAR"
+  esAnfitrion:false,
+  stats:{},
+  unsubStats:null,
+  unsubSala:null,
 };
 
 // ============================================================
-//  FIREBASE HELPERS
+//  FIREBASE
 // ============================================================
 let fbReady = false;
-document.addEventListener('fbready', () => {
-  fbReady = true;
-  updateFbStatus(true);
-});
+document.addEventListener('fbready', ()=>{ fbReady=true; updateFbDot(true); });
 
-function updateFbStatus(ok) {
-  const dot = document.getElementById('fbDot');
-  const txt = document.getElementById('fbText');
-  if(dot) dot.className = 'fb-dot ' + (ok ? 'ok' : 'err');
-  if(txt) txt.textContent = ok ? 'Firebase conectado ✓' : 'Sin conexión a Firebase';
+function updateFbDot(ok){
+  const d=document.getElementById('fbDot'), t=document.getElementById('fbText');
+  if(d) d.className='fb-dot '+(ok?'ok':'err');
+  if(t) t.textContent=ok?'Firebase conectado ✓':'Sin conexión';
 }
 
-async function fbSetStats(nombre, stats) {
-  if(!fbReady || !state.sessionId) return;
-  try {
-    const { doc, setDoc } = window._fbFns;
-    const db = window._db;
-    await setDoc(doc(db, 'sessions', state.sessionId, 'stats', nombre), stats, { merge: true });
-  } catch(e) { console.warn('fbSetStats error', e); }
+function genCodigo(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
 }
 
-function fbSubscribeStats() {
-  if(!fbReady || !state.sessionId) return;
-  const { collection, onSnapshot } = window._fbFns;
-  const db = window._db;
+async function fbCrearSala(salaId, data){
+  if(!fbReady) return false;
+  try{
+    const {doc,setDoc}=window._fbFns;
+    await setDoc(doc(window._db,'salas',salaId), data);
+    return true;
+  }catch(e){ console.warn(e); return false; }
+}
+
+async function fbGetSala(salaId){
+  if(!fbReady) return null;
+  try{
+    const {doc,getDoc}=window._fbFns;
+    const snap=await getDoc(doc(window._db,'salas',salaId));
+    return snap.exists()?snap.data():null;
+  }catch(e){ console.warn(e); return null; }
+}
+
+async function fbUpdateSala(salaId, data){
+  if(!fbReady) return;
+  try{
+    const {doc,setDoc}=window._fbFns;
+    await setDoc(doc(window._db,'salas',salaId), data, {merge:true});
+  }catch(e){ console.warn(e); }
+}
+
+function fbSuscribirSala(salaId, callback){
+  if(!fbReady) return null;
+  const {doc,onSnapshot}=window._fbFns;
+  return onSnapshot(doc(window._db,'salas',salaId), snap=>{
+    if(snap.exists()) callback(snap.data());
+  });
+}
+
+async function fbSetStats(nombre, stats){
+  if(!fbReady||!state.salaId) return;
+  try{
+    const {doc,setDoc}=window._fbFns;
+    await setDoc(doc(window._db,'salas',state.salaId,'stats',nombre), stats, {merge:true});
+  }catch(e){ console.warn(e); }
+}
+
+function fbSubscribeStats(){
+  if(!fbReady||!state.salaId) return;
+  const {collection,onSnapshot}=window._fbFns;
   if(state.unsubStats) state.unsubStats();
-  state.unsubStats = onSnapshot(
-    collection(db, 'sessions', state.sessionId, 'stats'),
-    (snap) => {
-      snap.forEach(d => {
-        const nombre = d.id;
-        const data = d.data();
-        if(!state.stats[nombre]) state.stats[nombre] = {bebidos:0,repartidos:0,chupitos:0};
-        state.stats[nombre] = { ...state.stats[nombre], ...data };
+  state.unsubStats=onSnapshot(
+    collection(window._db,'salas',state.salaId,'stats'),
+    snap=>{
+      snap.forEach(d=>{
+        const n=d.id, data=d.data();
+        if(!state.stats[n]) state.stats[n]={bebidos:0,repartidos:0,chupitos:0,hidalgos:0};
+        state.stats[n]={...state.stats[n],...data};
       });
       renderMarcador();
       if(state.yo) renderYoStats();
@@ -1047,351 +1147,423 @@ function fbSubscribeStats() {
   );
 }
 
-async function fbGuardarResumen(resumen) {
+async function fbGuardarResumen(resumen){
   if(!fbReady) return false;
-  try {
-    const { collection, addDoc, serverTimestamp } = window._fbFns;
-    const db = window._db;
-    await addDoc(collection(db, 'partidos'), { ...resumen, fecha: serverTimestamp() });
+  try{
+    const {collection,addDoc,serverTimestamp}=window._fbFns;
+    await addDoc(collection(window._db,'partidos'),{...resumen,fecha:serverTimestamp()});
     return true;
-  } catch(e) { console.warn('fbGuardarResumen error', e); return false; }
+  }catch(e){ return false; }
 }
 
-async function fbCargarHistorial() {
+async function fbCargarHistorial(){
   if(!fbReady) return [];
-  try {
-    const { collection, getDocs, query, orderBy } = window._fbFns;
-    const db = window._db;
-    const q = query(collection(db, 'partidos'), orderBy('fecha', 'desc'));
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  } catch(e) { console.warn('fbCargarHistorial error', e); return []; }
+  try{
+    const {collection,getDocs,query,orderBy}=window._fbFns;
+    const q=query(collection(window._db,'partidos'),orderBy('fecha','desc'));
+    const snap=await getDocs(q);
+    return snap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch(e){ return []; }
 }
 
 // ============================================================
 //  INIT
 // ============================================================
-window.onload = function() {
+window.onload=function(){
   renderMatchList();
   renderNumSelector();
 };
 
 // ============================================================
-//  SETUP
+//  SCREENS
 // ============================================================
-function renderMatchList(filter='') {
-  const c = document.getElementById('matchList');
-  c.innerHTML = '';
-  const grupos = [...new Set(PARTIDOS.map(p => p.grupo))];
-  const fl = filter.toLowerCase();
-  grupos.forEach(g => {
-    const gPartidos = PARTIDOS.filter(p =>
-      p.grupo === g && (fl==='' || p.e1.toLowerCase().includes(fl) || p.e2.toLowerCase().includes(fl) || p.t1.toLowerCase().includes(fl) || p.t2.toLowerCase().includes(fl))
-    );
-    if(!gPartidos.length) return;
-    const gh = document.createElement('div');
-    gh.className = 'grupo-header';
-    gh.textContent = `Grupo ${g}`;
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(el) el.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function showScreen2(id){
+  showScreen(id);
+  if(id==='screen-historial') cargarHistorial();
+}
+
+const ALL_TABS=['jugadores','yo','marcador','reglas','extra'];
+function showTab(tab){
+  ALL_TABS.forEach(t=>{
+    const s=document.getElementById(`screen-${t}`);
+    const n=document.getElementById(`nav-${t}`);
+    if(s) s.classList.remove('active');
+    if(n) n.classList.remove('active');
+  });
+  document.getElementById(`screen-${tab}`)?.classList.add('active');
+  document.getElementById(`nav-${tab}`)?.classList.add('active');
+  if(tab==='marcador') renderMarcador();
+  if(tab==='yo') renderYoStats();
+}
+
+// ============================================================
+//  SETUP (ANFITRIÓN)
+// ============================================================
+function renderMatchList(filter=''){
+  const c=document.getElementById('matchList');
+  c.innerHTML='';
+  const fl=filter.toLowerCase();
+  const grupos=[...new Set(PARTIDOS.map(p=>p.grupo))];
+  grupos.forEach(g=>{
+    const gP=PARTIDOS.filter(p=>p.grupo===g&&(fl===''||p.e1.toLowerCase().includes(fl)||p.e2.toLowerCase().includes(fl)||p.t1.toLowerCase().includes(fl)||p.t2.toLowerCase().includes(fl)));
+    if(!gP.length) return;
+    const gh=document.createElement('div');
+    gh.className='grupo-header'; gh.textContent=`Grupo ${g}`;
     c.appendChild(gh);
-    gPartidos.forEach(p => {
-      const el = document.createElement('div');
-      el.className = 'partido-item' + (state.partido && state.partido.e1===p.e1 && state.partido.e2===p.e2 ? ' selected' : '');
-      el.innerHTML = `<div class="flags">${p.e1.slice(-2)} ${p.e2.slice(-2)}</div>
+    gP.forEach(p=>{
+      const el=document.createElement('div');
+      el.className='partido-item'+(state.partido&&state.partido.e1===p.e1&&state.partido.e2===p.e2?' selected':'');
+      el.innerHTML=`<div class="flags">${p.e1.slice(-2)} ${p.e2.slice(-2)}</div>
         <div class="teams">${p.e1.split(' ')[0]} <span class="vs-text">vs</span> ${p.e2.split(' ')[0]}<br>
-        <span style="font-size:0.7rem;color:var(--texto2)">${p.fecha} · Grupo ${p.grupo}</span></div>
-        <div class="check">${state.partido && state.partido.e1===p.e1 && state.partido.e2===p.e2 ? '✓' : ''}</div>`;
-      el.onclick = () => selectPartido(p);
+        <span style="font-size:.7rem;color:var(--texto2)">${p.fecha} · Grupo ${p.grupo}</span></div>
+        <div class="check">${state.partido&&state.partido.e1===p.e1&&state.partido.e2===p.e2?'✓':''}</div>`;
+      el.onclick=()=>selectPartido(p);
       c.appendChild(el);
     });
   });
 }
 
-function filterMatches() { renderMatchList(document.getElementById('matchSearch').value); }
+function filterMatches(){ renderMatchList(document.getElementById('matchSearch').value); }
 
-function selectPartido(p) {
-  state.partido = p;
+function selectPartido(p){
+  state.partido=p;
   renderMatchList(document.getElementById('matchSearch').value);
-  document.getElementById('numPlayersCard').style.display = 'block';
+  document.getElementById('numPlayersCard').style.display='block';
   document.getElementById('numPlayersCard').scrollIntoView({behavior:'smooth'});
 }
 
-function renderNumSelector() {
-  const c = document.getElementById('numSelector');
-  c.innerHTML = '';
-  for(let i=2; i<=10; i++) {
-    const b = document.createElement('button');
-    b.className = 'num-btn' + (state.numJugadores===i ? ' selected' : '');
-    b.textContent = i;
-    b.onclick = () => selectNum(i);
+function renderNumSelector(){
+  const c=document.getElementById('numSelector'); c.innerHTML='';
+  for(let i=2;i<=10;i++){
+    const b=document.createElement('button');
+    b.className='num-btn'+(state.numJugadores===i?' selected':'');
+    b.textContent=i; b.onclick=()=>selectNum(i);
     c.appendChild(b);
   }
 }
 
-function selectNum(n) {
-  state.numJugadores = n;
-  renderNumSelector();
-  renderPlayerNameInputs();
-  document.getElementById('playerNamesCard').style.display = 'block';
-  document.getElementById('sortearBtn').style.display = 'block';
-  setTimeout(() => document.getElementById('playerNamesCard').scrollIntoView({behavior:'smooth'}), 100);
+function selectNum(n){
+  state.numJugadores=n; renderNumSelector(); renderPlayerNameInputs();
+  document.getElementById('playerNamesCard').style.display='block';
+  document.getElementById('sortearBtn').style.display='block';
+  setTimeout(()=>document.getElementById('playerNamesCard').scrollIntoView({behavior:'smooth'}),100);
 }
 
-function renderPlayerNameInputs() {
-  const c = document.getElementById('playerNameInputs');
-  c.innerHTML = '';
-  for(let i=0; i<state.numJugadores; i++) {
-    const row = document.createElement('div');
-    row.className = 'player-row';
-    row.innerHTML = `<div class="player-avatar" style="background:${playerColor(i)}">${i+1}</div>
+function renderPlayerNameInputs(){
+  const c=document.getElementById('playerNameInputs'); c.innerHTML='';
+  for(let i=0;i<state.numJugadores;i++){
+    const row=document.createElement('div'); row.className='player-row';
+    row.innerHTML=`<div class="player-avatar" style="background:${playerColor(i)}">${i+1}</div>
       <input type="text" placeholder="Nombre jugador ${i+1}" id="pname-${i}" value="${state.nombres[i]||''}"/>`;
     c.appendChild(row);
   }
 }
 
 // ============================================================
-//  SORTEO
+//  SORTEO Y CREACIÓN DE SALA
 // ============================================================
-function shuffle(arr) {
-  const a = [...arr];
-  for(let i=a.length-1; i>0; i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
   return a;
 }
 
-function sortearJugadores() {
-  if(!state.partido) { showToast('Elige un partido primero'); return; }
-  if(!state.numJugadores) { showToast('Elige cuántos jugáis'); return; }
-  const nombres = [];
-  for(let i=0; i<state.numJugadores; i++) {
-    const v = document.getElementById(`pname-${i}`)?.value?.trim() || `Jugador ${i+1}`;
+function posAbbr(p){ return {P:'POR',D:'DEF',M:'CEN',F:'DEL'}[p]||p; }
+function posClass(p){ return {P:'portero',D:'defensa',M:'centrocampista',F:'delantero'}[p]||''; }
+
+async function sortearJugadores(){
+  if(!state.partido){ showToast('Elige un partido primero'); return; }
+  if(!state.numJugadores){ showToast('Elige cuántos jugáis'); return; }
+  const nombres=[];
+  for(let i=0;i<state.numJugadores;i++){
+    const v=document.getElementById(`pname-${i}`)?.value?.trim()||`Jugador ${i+1}`;
     nombres.push(v);
   }
-  state.nombres = nombres;
-  const shuffled1 = shuffle(PLANTILLAS[state.partido.t1] || []);
-  const shuffled2 = shuffle(PLANTILLAS[state.partido.t2] || []);
-  state.asignaciones = nombres.map((nombre, i) => ({
-    nombre, colorIdx: i,
-    teamA: state.partido.e1, teamB: state.partido.e2,
-    jugadorA: shuffled1[i % shuffled1.length] || {n:'?',p:'?'},
-    jugadorB: shuffled2[i % shuffled2.length] || {n:'?',p:'?'},
+  state.nombres=nombres;
+  const shuffled1=shuffle(PLANTILLAS[state.partido.t1]||[]);
+  const shuffled2=shuffle(PLANTILLAS[state.partido.t2]||[]);
+  state.asignaciones=nombres.map((nombre,i)=>({
+    nombre, colorIdx:i,
+    teamA:state.partido.e1, teamB:state.partido.e2,
+    jugadorA:shuffled1[i%shuffled1.length]||{n:'?',p:'?'},
+    jugadorB:shuffled2[i%shuffled2.length]||{n:'?',p:'?'},
   }));
-  state.comodines = {};
-  state.stats = {};
-  nombres.forEach(n => {
-    state.comodines[n] = {p1:false, p2:false};
-    state.stats[n] = {bebidos:0, repartidos:0, chupitos:0, hidalgos:0};
+  state.comodines={};
+  state.stats={};
+  nombres.forEach(n=>{
+    state.comodines[n]={p1:false,p2:false};
+    state.stats[n]={bebidos:0,repartidos:0,chupitos:0,hidalgos:0};
   });
-  state.chupitos = 0;
-  state.sessionId = 'session_' + Date.now();
+  state.chupitos=0;
+  state.esAnfitrion=true;
+
+  // Generar código único
+  let codigo=genCodigo();
+  // Guardar sala en Firebase con estado "esperando"
+  const salaData={
+    codigo,
+    partido:state.partido,
+    asignaciones:state.asignaciones,
+    estado:'esperando', // 'esperando' | 'jugando' | 'terminado'
+    creadaEn: Date.now(),
+  };
+  state.salaId=codigo;
+  await fbCrearSala(codigo, salaData);
+
+  // Mostrar código en pantalla de sorteo
+  document.getElementById('sala-codigo').textContent=codigo;
   renderSorteo();
   showScreen('screen-sorteo');
+  showToast(`Sala creada: ${codigo}`);
 }
 
-function posAbbr(p) { return {P:'POR',D:'DEF',M:'CEN',F:'DEL'}[p]||p; }
-function posClass(p) { return {P:'portero',D:'defensa',M:'centrocampista',F:'delantero'}[p]||''; }
-
-function renderSorteo() {
-  const c = document.getElementById('sorteoResultado');
-  c.innerHTML = '';
-  state.asignaciones.forEach(a => {
-    const card = document.createElement('div');
-    card.className = 'asignacion-card';
-    card.innerHTML = `<div class="jugador-nombre" style="color:${playerColor(a.colorIdx)}">👤 ${a.nombre}</div>
+function renderSorteo(){
+  const c=document.getElementById('sorteoResultado'); c.innerHTML='';
+  state.asignaciones.forEach(a=>{
+    const card=document.createElement('div'); card.className='asignacion-card';
+    card.innerHTML=`<div class="jugador-nombre" style="color:${playerColor(a.colorIdx)}">👤 ${a.nombre}</div>
       <div class="team-col"><div class="team-label">${a.teamA}</div>
-        <span><span class="badge ${posClass(a.jugadorA.p)}">${posAbbr(a.jugadorA.p)}</span> <strong>${a.jugadorA.n}</strong></span></div>
+        <span class="badge ${posClass(a.jugadorA.p)}">${posAbbr(a.jugadorA.p)}</span> <strong>${a.jugadorA.n}</strong></div>
       <div class="team-col" style="margin-top:6px"><div class="team-label">${a.teamB}</div>
-        <span><span class="badge ${posClass(a.jugadorB.p)}">${posAbbr(a.jugadorB.p)}</span> <strong>${a.jugadorB.n}</strong></span></div>`;
+        <span class="badge ${posClass(a.jugadorB.p)}">${posAbbr(a.jugadorB.p)}</span> <strong>${a.jugadorB.n}</strong></div>`;
     c.appendChild(card);
   });
 }
 
-function resortear() { sortearJugadores(); }
+function resortear(){ sortearJugadores(); }
 
-function empezarJuego() {
-  document.getElementById('bottomNav').style.display = 'flex';
-  document.getElementById('header-sub').textContent = `${state.partido.e1.split(' ')[0]} vs ${state.partido.e2.split(' ')[0]}`;
+// ============================================================
+//  UNIRSE A SALA
+// ============================================================
+async function unirseASala(){
+  const codigo=document.getElementById('codigoInput').value.trim().toUpperCase();
+  if(codigo.length!==4){ mostrarErrorUnirse('El código debe tener 4 letras'); return; }
+  showToast('Buscando sala...');
+  const sala=await fbGetSala(codigo);
+  if(!sala){ mostrarErrorUnirse('No se encontró ninguna sala con ese código'); return; }
+  if(sala.estado==='terminado'){ mostrarErrorUnirse('Este partido ya ha terminado'); return; }
+
+  // Cargar estado de la sala
+  state.salaId=codigo;
+  state.esAnfitrion=false;
+  state.partido=sala.partido;
+  state.asignaciones=sala.asignaciones;
+  state.nombres=sala.asignaciones.map(a=>a.nombre);
+  state.comodines={};
+  state.stats={};
+  state.nombres.forEach(n=>{
+    state.comodines[n]={p1:false,p2:false};
+    state.stats[n]={bebidos:0,repartidos:0,chupitos:0,hidalgos:0};
+  });
+
+  document.getElementById('espera-codigo').textContent=codigo;
+  renderEsperaAsignacion();
+
+  if(sala.estado==='jugando'){
+    // El partido ya empezó — entrar directamente
+    entrarAlJuego();
+  } else {
+    // Esperar a que el anfitrión empiece
+    showScreen('screen-sala-espera');
+    // Suscribirse a cambios de la sala
+    state.unsubSala=fbSuscribirSala(codigo, data=>{
+      if(data.estado==='jugando'){
+        if(state.unsubSala){ state.unsubSala(); state.unsubSala=null; }
+        entrarAlJuego();
+      }
+    });
+  }
+}
+
+function mostrarErrorUnirse(msg){
+  document.getElementById('unirse-error').style.display='block';
+  document.getElementById('unirse-error-msg').textContent='❌ '+msg;
+}
+
+function renderEsperaAsignacion(){
+  const c=document.getElementById('espera-asignacion'); c.innerHTML='';
+  const div=document.createElement('div');
+  div.innerHTML='<p style="font-size:.78rem;color:var(--texto2);margin-bottom:8px">Jugadores en esta sala:</p>';
+  state.asignaciones.forEach(a=>{
+    const row=document.createElement('div');
+    row.style.cssText='padding:6px 0;border-bottom:1px solid var(--borde);font-size:.85rem';
+    row.innerHTML=`<span style="color:${playerColor(a.colorIdx)};font-weight:700">${a.nombre}</span>
+      <span style="color:var(--texto2);font-size:.75rem;margin-left:8px">${a.jugadorA.n} · ${a.jugadorB.n}</span>`;
+    div.appendChild(row);
+  });
+  c.appendChild(div);
+}
+
+// ============================================================
+//  EMPEZAR JUEGO
+// ============================================================
+async function empezarJuego(){
+  // Anfitrión cambia estado de la sala a 'jugando'
+  if(state.esAnfitrion && state.salaId){
+    await fbUpdateSala(state.salaId, {estado:'jugando'});
+  }
+  entrarAlJuego();
+}
+
+function entrarAlJuego(){
+  document.getElementById('bottomNav').style.display='flex';
+  document.getElementById('header-sub').textContent=
+    `${state.partido.e1.split(' ')[0]} vs ${state.partido.e2.split(' ')[0]} · ${state.salaId}`;
   fbSubscribeStats();
   showScreen('screen-jugadores');
-  showTab('jugadores');
+  ALL_TABS.forEach(t=>{
+    document.getElementById(`screen-${t}`)?.classList.remove('active');
+    document.getElementById(`nav-${t}`)?.classList.remove('active');
+  });
+  document.getElementById('screen-jugadores').classList.add('active');
+  document.getElementById('nav-jugadores').classList.add('active');
   renderPlayerCards();
   renderComodines();
   renderMVPLista();
   renderSelectorYo();
-}
-
-// ============================================================
-//  TABS
-// ============================================================
-const ALL_TABS = ['jugadores','yo','marcador','reglas','extra'];
-
-function showTab(tab) {
-  ALL_TABS.forEach(t => {
-    const s = document.getElementById(`screen-${t}`);
-    const n = document.getElementById(`nav-${t}`);
-    if(s) s.classList.remove('active');
-    if(n) n.classList.remove('active');
-  });
-  const target = document.getElementById(`screen-${tab}`);
-  const navTarget = document.getElementById(`nav-${tab}`);
-  if(target) target.classList.add('active');
-  if(navTarget) navTarget.classList.add('active');
-  if(tab === 'marcador') renderMarcador();
-  if(tab === 'yo') renderYoStats();
-}
-
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const el = document.getElementById(id);
-  if(el) el.classList.add('active');
-}
-
-function showScreen2(id) {
-  showScreen(id);
-  if(id === 'screen-historial') cargarHistorial();
+  updateFbDot(true);
 }
 
 // ============================================================
 //  PLAYER CARDS
 // ============================================================
-function renderPlayerCards() {
-  const c = document.getElementById('playerCards');
-  c.innerHTML = '<div style="margin-top:10px"></div>';
-  state.asignaciones.forEach(a => {
-    const card = document.createElement('div');
-    card.className = 'asignacion-card';
-    const n = a.nombre.replace(/'/g, "\\'");
-    card.innerHTML = `<div class="jugador-nombre" style="color:${playerColor(a.colorIdx)}">👤 ${a.nombre}</div>
+function renderPlayerCards(){
+  const c=document.getElementById('playerCards');
+  c.innerHTML='<div style="margin-top:10px"></div>';
+  state.asignaciones.forEach(a=>{
+    const card=document.createElement('div'); card.className='asignacion-card';
+    const n=a.nombre.replace(/'/g,"\\'");
+    card.innerHTML=`<div class="jugador-nombre" style="color:${playerColor(a.colorIdx)}">👤 ${a.nombre}</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <div style="flex:1;min-width:110px"><div class="team-label">${a.teamA}</div>
           <span class="badge ${posClass(a.jugadorA.p)}">${posAbbr(a.jugadorA.p)}</span> <strong>${a.jugadorA.n}</strong></div>
         <div style="flex:1;min-width:110px"><div class="team-label">${a.teamB}</div>
           <span class="badge ${posClass(a.jugadorB.p)}">${posAbbr(a.jugadorB.p)}</span> <strong>${a.jugadorB.n}</strong></div>
       </div>
-      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+      ${state.esAnfitrion?`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn pequeño verde" onclick="cambiarJugadorA('${n}')">🔄 ${state.partido.e1.split(' ')[0]}</button>
         <button class="btn pequeño verde" onclick="cambiarJugadorB('${n}')">🔄 ${state.partido.e2.split(' ')[0]}</button>
-      </div>`;
+      </div>`:''}`;
     c.appendChild(card);
   });
 }
 
-function cambiarJugadorA(nombre) {
-  const a = state.asignaciones.find(x => x.nombre === nombre);
-  if(!a) return;
-  const nuevo = (PLANTILLAS[state.partido.t1]||[])[Math.floor(Math.random()*(PLANTILLAS[state.partido.t1]||[]).length)];
-  a.jugadorA = nuevo;
-  showToast(`${nombre} → ${nuevo.n} · cuesta 3 sorbos`);
+function cambiarJugadorA(nombre){
+  if(!state.esAnfitrion){ showToast('Solo el anfitrión puede cambiar jugadores'); return; }
+  const a=state.asignaciones.find(x=>x.nombre===nombre); if(!a) return;
+  const pool=PLANTILLAS[state.partido.t1]||[];
+  a.jugadorA=pool[Math.floor(Math.random()*pool.length)];
+  showToast(`${nombre} → ${a.jugadorA.n} · cuesta 3 sorbos`);
   renderPlayerCards();
+  fbUpdateSala(state.salaId,{asignaciones:state.asignaciones});
 }
 
-function cambiarJugadorB(nombre) {
-  const a = state.asignaciones.find(x => x.nombre === nombre);
-  if(!a) return;
-  const nuevo = (PLANTILLAS[state.partido.t2]||[])[Math.floor(Math.random()*(PLANTILLAS[state.partido.t2]||[]).length)];
-  a.jugadorB = nuevo;
-  showToast(`${nombre} → ${nuevo.n} · cuesta 3 sorbos`);
+function cambiarJugadorB(nombre){
+  if(!state.esAnfitrion){ showToast('Solo el anfitrión puede cambiar jugadores'); return; }
+  const a=state.asignaciones.find(x=>x.nombre===nombre); if(!a) return;
+  const pool=PLANTILLAS[state.partido.t2]||[];
+  a.jugadorB=pool[Math.floor(Math.random()*pool.length)];
+  showToast(`${nombre} → ${a.jugadorB.n} · cuesta 3 sorbos`);
   renderPlayerCards();
+  fbUpdateSala(state.salaId,{asignaciones:state.asignaciones});
 }
 
 // ============================================================
-//  YO — STATS PERSONALES
+//  YO
 // ============================================================
-function renderSelectorYo() {
-  const c = document.getElementById('selectorYo');
-  c.innerHTML = '';
-  state.asignaciones.forEach(a => {
-    const btn = document.createElement('button');
-    btn.className = 'yo-btn' + (state.yo === a.nombre ? ' selected' : '');
-    btn.textContent = a.nombre;
-    btn.style.borderColor = playerColor(a.colorIdx);
-    btn.onclick = () => { state.yo = a.nombre; renderSelectorYo(); renderYoStats(); };
+function renderSelectorYo(){
+  const c=document.getElementById('selectorYo'); c.innerHTML='';
+  state.asignaciones.forEach(a=>{
+    const btn=document.createElement('button');
+    btn.className='yo-btn'+(state.yo===a.nombre?' selected':'');
+    btn.textContent=a.nombre;
+    btn.style.borderColor=playerColor(a.colorIdx);
+    btn.onclick=()=>{ state.yo=a.nombre; renderSelectorYo(); renderYoStats(); };
     c.appendChild(btn);
   });
 }
 
-function renderYoStats() {
+function renderYoStats(){
   if(!state.yo) return;
-  const s = state.stats[state.yo] || {bebidos:0,repartidos:0,chupitos:0};
-  document.getElementById('yoStats').style.display = 'block';
-  const a = state.asignaciones.find(x => x.nombre === state.yo);
-  document.getElementById('yo-titulo').textContent = `🍺 ${state.yo}`;
-  if(a) {
-    document.getElementById('yo-jugadores-info').innerHTML =
-      `${a.teamA}: <strong>${a.jugadorA.n}</strong> &nbsp;|&nbsp; ${a.teamB}: <strong>${a.jugadorB.n}</strong>`;
-  }
-  document.getElementById('stat-bebidos').textContent = s.bebidos || 0;
-  document.getElementById('stat-repartidos').textContent = s.repartidos || 0;
-  document.getElementById('stat-chupitos').textContent = s.chupitos || 0;
-  document.getElementById('stat-hidalgos').textContent = s.hidalgos || 0;
-  const hidalgo = (s.repartidos||0) - (s.bebidos||0);
-  const hEl = document.getElementById('stat-hidalgo');
-  hEl.textContent = hidalgo;
-  hEl.style.color = hidalgo >= 0 ? '#5ddf85' : '#ff8080';
+  const s=state.stats[state.yo]||{bebidos:0,repartidos:0,chupitos:0,hidalgos:0};
+  document.getElementById('yoStats').style.display='block';
+  const a=state.asignaciones.find(x=>x.nombre===state.yo);
+  document.getElementById('yo-titulo').textContent=`🍺 ${state.yo}`;
+  if(a) document.getElementById('yo-jugadores-info').innerHTML=
+    `${a.teamA}: <strong>${a.jugadorA.n}</strong> &nbsp;|&nbsp; ${a.teamB}: <strong>${a.jugadorB.n}</strong>`;
+  document.getElementById('stat-bebidos').textContent=s.bebidos||0;
+  document.getElementById('stat-repartidos').textContent=s.repartidos||0;
+  document.getElementById('stat-chupitos').textContent=s.chupitos||0;
+  document.getElementById('stat-hidalgos').textContent=s.hidalgos||0;
+  const bal=(s.repartidos||0)-(s.bebidos||0);
+  const h=document.getElementById('stat-hidalgo');
+  h.textContent=bal; h.style.color=bal>=0?'#5ddf85':'#ff8080';
 }
 
-async function cambiarStat(tipo, delta) {
-  if(!state.yo) { showToast('Primero selecciona tu nombre'); return; }
-  if(!state.stats[state.yo]) state.stats[state.yo] = {bebidos:0,repartidos:0,chupitos:0};
-  state.stats[state.yo][tipo] = Math.max(0, (state.stats[state.yo][tipo]||0) + delta);
-  renderYoStats();
-  renderMarcador();
-  const el = document.getElementById(`stat-${tipo}`);
-  if(el) { el.classList.remove('animate-bounce'); void el.offsetWidth; el.classList.add('animate-bounce'); }
-  await fbSetStats(state.yo, state.stats[state.yo]);
+async function cambiarStat(tipo,delta){
+  if(!state.yo){ showToast('Primero selecciona tu nombre'); return; }
+  if(!state.stats[state.yo]) state.stats[state.yo]={bebidos:0,repartidos:0,chupitos:0,hidalgos:0};
+  state.stats[state.yo][tipo]=Math.max(0,(state.stats[state.yo][tipo]||0)+delta);
+  renderYoStats(); renderMarcador();
+  const el=document.getElementById(`stat-${tipo}`);
+  if(el){ el.classList.remove('animate-bounce'); void el.offsetWidth; el.classList.add('animate-bounce'); }
+  await fbSetStats(state.yo,state.stats[state.yo]);
 }
 
 // ============================================================
 //  MARCADOR
 // ============================================================
-function renderMarcador() {
-  const c = document.getElementById('marcadorLista');
-  if(!c) return;
-  if(!state.asignaciones.length) { c.innerHTML = '<div class="loading">No hay partida activa</div>'; return; }
-  // Sort by hidalgo desc
-  const sorted = [...state.asignaciones].sort((a,b) => {
-    const sa = state.stats[a.nombre]||{bebidos:0,repartidos:0,chupitos:0};
-    const sb = state.stats[b.nombre]||{bebidos:0,repartidos:0,chupitos:0};
-    return ((sb.repartidos||0)-(sb.bebidos||0)) - ((sa.repartidos||0)-(sa.bebidos||0));
+function renderMarcador(){
+  const c=document.getElementById('marcadorLista'); if(!c) return;
+  if(!state.asignaciones.length){ c.innerHTML='<div class="loading">No hay partida activa</div>'; return; }
+  const sorted=[...state.asignaciones].sort((a,b)=>{
+    const sa=state.stats[a.nombre]||{}, sb=state.stats[b.nombre]||{};
+    return ((sb.repartidos||0)-(sb.bebidos||0))-((sa.repartidos||0)-(sa.bebidos||0));
   });
-  c.innerHTML = `<div style="display:flex;padding:0 12px;margin-bottom:4px">
-    <div style="flex:1;font-size:0.68rem;color:var(--texto2);text-transform:uppercase">Jugador</div>
-    <div style="min-width:36px;text-align:center;font-size:0.68rem;color:var(--texto2)">🍺</div>
-    <div style="min-width:36px;text-align:center;font-size:0.68rem;color:var(--texto2)">🎁</div>
-    <div style="min-width:36px;text-align:center;font-size:0.68rem;color:var(--texto2)">🥃</div>
-    <div style="min-width:36px;text-align:center;font-size:0.68rem;color:var(--dorado)">💧</div>
-    <div style="min-width:36px;text-align:center;font-size:0.68rem;color:#80c0ff">⚖️</div>
+  c.innerHTML=`<div style="display:flex;padding:0 10px;margin-bottom:4px">
+    <div style="flex:1;font-size:.65rem;color:var(--texto2);text-transform:uppercase">Jugador</div>
+    <div style="min-width:30px;text-align:center;font-size:.65rem;color:var(--texto2)">🍺</div>
+    <div style="min-width:30px;text-align:center;font-size:.65rem;color:var(--texto2)">🎁</div>
+    <div style="min-width:30px;text-align:center;font-size:.65rem;color:var(--texto2)">🥃</div>
+    <div style="min-width:30px;text-align:center;font-size:.65rem;color:var(--dorado)">💧</div>
+    <div style="min-width:30px;text-align:center;font-size:.65rem;color:#80c0ff">⚖️</div>
   </div>`;
-  sorted.forEach((a, idx) => {
-    const s = state.stats[a.nombre]||{bebidos:0,repartidos:0,chupitos:0};
-    const hidalgo = (s.repartidos||0)-(s.bebidos||0);
-    const row = document.createElement('div');
-    row.className = 'marcador-row';
-    row.innerHTML = `<div style="width:22px;font-size:0.8rem;color:var(--texto2)">${idx+1}</div>
+  sorted.forEach((a,idx)=>{
+    const s=state.stats[a.nombre]||{bebidos:0,repartidos:0,chupitos:0,hidalgos:0};
+    const bal=(s.repartidos||0)-(s.bebidos||0);
+    const row=document.createElement('div'); row.className='marcador-row';
+    row.innerHTML=`<div style="width:20px;font-size:.78rem;color:var(--texto2)">${idx+1}</div>
       <div class="marcador-nombre" style="color:${playerColor(a.colorIdx)}">${a.nombre}</div>
-      <div class="marcador-stat"><span class="val">${s.bebidos||0}</span><span class="lbl">Beb.</span></div>
-      <div class="marcador-stat"><span class="val">${s.repartidos||0}</span><span class="lbl">Rep.</span></div>
-      <div class="marcador-stat"><span class="val">${s.chupitos||0}</span><span class="lbl">Chu.</span></div>
-      <div class="marcador-stat"><span class="val" style="color:${hidalgo>=0?'#5ddf85':'#ff8080'}">${hidalgo}</span><span class="lbl">Hid.</span></div>
+      <div class="marcador-stat"><span class="val">${s.bebidos||0}</span><span class="lbl">Beb</span></div>
+      <div class="marcador-stat"><span class="val">${s.repartidos||0}</span><span class="lbl">Rep</span></div>
+      <div class="marcador-stat"><span class="val">${s.chupitos||0}</span><span class="lbl">Chu</span></div>
+      <div class="marcador-stat"><span class="val" style="color:${bal>=0?'#5ddf85':'#ff8080'}">${bal}</span><span class="lbl">Hid</span></div>
       <div class="marcador-stat"><span class="val" style="color:#80c0ff">${s.hidalgos||0}</span><span class="lbl">Copa</span></div>`;
     c.appendChild(row);
   });
-  c.innerHTML += `<p style="font-size:0.68rem;color:var(--texto2);text-align:center;margin-top:6px">🍺 Bebidos · 🎁 Repartidos · 🥃 Chupitos · 💧 Hidalgo · ⚖️ Copa</p>`;
+  c.innerHTML+=`<p style="font-size:.65rem;color:var(--texto2);text-align:center;margin-top:6px">🍺 Bebidos · 🎁 Repartidos · 🥃 Chupitos · 💧 Hidalgo · ⚖️ Copa</p>`;
 }
 
 // ============================================================
 //  COMODINES
 // ============================================================
-function renderComodines() {
-  ['Primera','Segunda'].forEach(parte => {
-    const key = parte === 'Primera' ? 'p1' : 'p2';
-    const c = document.getElementById(`comodines${parte}`);
-    if(!c) return;
-    c.innerHTML = '';
-    state.asignaciones.forEach(a => {
-      const usado = state.comodines[a.nombre]?.[key];
-      const n = a.nombre.replace(/'/g,"\\'");
-      const row = document.createElement('div');
-      row.className = 'comodin-row';
-      row.innerHTML = `<div class="comodin-name" style="color:${playerColor(a.colorIdx)}">${a.nombre}</div>
+function renderComodines(){
+  ['Primera','Segunda'].forEach(parte=>{
+    const key=parte==='Primera'?'p1':'p2';
+    const c=document.getElementById(`comodines${parte}`); if(!c) return;
+    c.innerHTML='';
+    state.asignaciones.forEach(a=>{
+      const usado=state.comodines[a.nombre]?.[key];
+      const n=a.nombre.replace(/'/g,"\\'");
+      const row=document.createElement('div'); row.className='comodin-row';
+      row.innerHTML=`<div class="comodin-name" style="color:${playerColor(a.colorIdx)}">${a.nombre}</div>
         <div class="comodin-btns">
           <button class="comodin-btn ${usado?'usado':''}" onclick="toggleComodin('${n}','${key}')">${usado?'✗':'🃏'}</button>
           <span class="comodin-count">${usado?'Usado':'Libre'}</span>
@@ -1401,174 +1573,137 @@ function renderComodines() {
   });
 }
 
-function toggleComodin(nombre, parte) {
+function toggleComodin(nombre,parte){
   if(!state.comodines[nombre]) return;
-  state.comodines[nombre][parte] = !state.comodines[nombre][parte];
-  showToast(state.comodines[nombre][parte] ? `${nombre} usa comodín 🃏` : `${nombre} recupera comodín`);
+  state.comodines[nombre][parte]=!state.comodines[nombre][parte];
+  showToast(state.comodines[nombre][parte]?`${nombre} usa comodín 🃏`:`${nombre} recupera comodín`);
   renderComodines();
 }
 
 // ============================================================
 //  VAR
 // ============================================================
-function toggleVar() {
-  if(state.varRunning) {
-    clearInterval(state.varInterval);
-    state.varRunning = false;
-    document.getElementById('var-btn').textContent = '▶ Reanudar VAR';
-    document.getElementById('var-estado').textContent = 'Pausado';
-  } else {
-    state.varRunning = true;
-    document.getElementById('var-btn').textContent = '⏸ Pausar VAR';
-    document.getElementById('var-estado').textContent = '🔴 VAR en curso — ¡SILENCIO!';
-    state.varInterval = setInterval(() => {
+function toggleVar(){
+  if(state.varRunning){
+    clearInterval(state.varInterval); state.varRunning=false;
+    document.getElementById('var-btn').textContent='▶ Reanudar VAR';
+    document.getElementById('var-estado').textContent='Pausado';
+  }else{
+    state.varRunning=true;
+    document.getElementById('var-btn').textContent='⏸ Pausar VAR';
+    document.getElementById('var-estado').textContent='🔴 VAR en curso — ¡SILENCIO!';
+    state.varInterval=setInterval(()=>{
       state.varSeconds++;
-      const m = Math.floor(state.varSeconds/60), s = state.varSeconds%60;
-      document.getElementById('var-timer').textContent = `${m}:${s.toString().padStart(2,'0')}`;
-      if(state.varSeconds>0 && state.varSeconds%30===0 && state.varSeconds!==state.varLastAlert) {
-        state.varLastAlert = state.varSeconds;
+      const m=Math.floor(state.varSeconds/60),s=state.varSeconds%60;
+      document.getElementById('var-timer').textContent=`${m}:${s.toString().padStart(2,'0')}`;
+      if(state.varSeconds>0&&state.varSeconds%30===0&&state.varSeconds!==state.varLastAlert){
+        state.varLastAlert=state.varSeconds;
         showToast(`⏱️ ${state.varSeconds}s de VAR → ¡1 sorbo todos!`);
       }
-    }, 1000);
+    },1000);
   }
 }
 
-function resetVar() {
-  clearInterval(state.varInterval);
-  state.varRunning = false; state.varSeconds = 0; state.varLastAlert = 0;
-  document.getElementById('var-btn').textContent = '▶ Iniciar VAR';
-  document.getElementById('var-estado').textContent = 'Parado';
-  document.getElementById('var-timer').textContent = '0:00';
+function resetVar(){
+  clearInterval(state.varInterval); state.varRunning=false; state.varSeconds=0; state.varLastAlert=0;
+  document.getElementById('var-btn').textContent='▶ Iniciar VAR';
+  document.getElementById('var-estado').textContent='Parado';
+  document.getElementById('var-timer').textContent='0:00';
 }
 
 // ============================================================
-//  CHUPITOS GLOBALES
+//  CHUPITOS
 // ============================================================
-function cambiarChupitosGlobal(delta) {
-  state.chupitos = Math.max(0, Math.min(10, state.chupitos+delta));
-  const el = document.getElementById('chupito-count');
-  el.textContent = state.chupitos;
-  el.classList.remove('animate-bounce'); void el.offsetWidth; el.classList.add('animate-bounce');
-  const restante = Math.max(0, 3-state.chupitos);
-  document.getElementById('chupito-status').textContent = state.chupitos>=3 ? '¡Límite! Goles = 3 sorbos' : `Quedan ${restante} de 3`;
-  document.getElementById('chupito-alerta').style.display = state.chupitos>=3 ? 'block' : 'none';
+function cambiarChupitosGlobal(delta){
+  state.chupitos=Math.max(0,Math.min(10,state.chupitos+delta));
+  document.getElementById('chupito-count').textContent=state.chupitos;
+  document.getElementById('chupito-status').textContent=state.chupitos>=3?'¡Límite! Goles = 3 sorbos':`Quedan ${Math.max(0,3-state.chupitos)} de 3`;
+  document.getElementById('chupito-alerta').style.display=state.chupitos>=3?'block':'none';
 }
 
 // ============================================================
 //  MVP
 // ============================================================
-function renderMVPLista() {
-  const c = document.getElementById('mvp-lista');
-  if(!c) return;
-  c.innerHTML = '';
-  state.asignaciones.forEach(a => {
-    const btn = document.createElement('button');
-    btn.className = 'btn verde'; btn.style.marginTop = '6px';
-    btn.innerHTML = `🏅 ${a.nombre} es MVP`;
-    btn.onclick = () => showToast(`🏅 MVP: ${a.nombre} → reparte 5 sorbos!`);
+function renderMVPLista(){
+  const c=document.getElementById('mvp-lista'); if(!c) return; c.innerHTML='';
+  state.asignaciones.forEach(a=>{
+    const btn=document.createElement('button');
+    btn.className='btn verde'; btn.style.marginTop='6px';
+    btn.innerHTML=`🏅 ${a.nombre} es MVP`;
+    btn.onclick=()=>showToast(`🏅 MVP: ${a.nombre} → reparte 5 sorbos!`);
     c.appendChild(btn);
   });
 }
 
 // ============================================================
-//  TERMINAR PARTIDO / RESUMEN
+//  TERMINAR PARTIDO
 // ============================================================
-async function terminarPartido() {
+async function terminarPartido(){
   if(!confirm('¿Terminar el partido y ver el resumen?')) return;
   clearInterval(state.varInterval);
   if(state.unsubStats) state.unsubStats();
+  if(state.esAnfitrion) await fbUpdateSala(state.salaId,{estado:'terminado'});
 
-  // Build summary
-  const jugadoresResumen = state.asignaciones.map(a => {
-    const s = state.stats[a.nombre]||{bebidos:0,repartidos:0,chupitos:0};
-    return {
-      nombre: a.nombre,
-      jugadorA: a.jugadorA.n, equipoA: a.teamA,
-      jugadorB: a.jugadorB.n, equipoB: a.teamB,
-      bebidos: s.bebidos||0, repartidos: s.repartidos||0, chupitos: s.chupitos||0,
-      hidalgos: s.hidalgos||0,
-      hidalgo: (s.repartidos||0)-(s.bebidos||0),
-    };
+  const jugRes=state.asignaciones.map(a=>{
+    const s=state.stats[a.nombre]||{bebidos:0,repartidos:0,chupitos:0,hidalgos:0};
+    return{nombre:a.nombre,jugadorA:a.jugadorA.n,equipoA:a.teamA,jugadorB:a.jugadorB.n,equipoB:a.teamB,
+      bebidos:s.bebidos||0,repartidos:s.repartidos||0,chupitos:s.chupitos||0,hidalgos:s.hidalgos||0,
+      hidalgo:(s.repartidos||0)-(s.bebidos||0)};
   });
+  const resumen={partido:`${state.partido.e1} vs ${state.partido.e2}`,fecha_texto:state.partido.fecha,grupo:state.partido.grupo,totalChupitos:state.chupitos,jugadores:jugRes};
+  const winner=jugRes.reduce((a,b)=>b.hidalgo>a.hidalgo?b:a,jugRes[0]);
 
-  const resumen = {
-    partido: `${state.partido.e1} vs ${state.partido.e2}`,
-    fecha_texto: state.partido.fecha,
-    grupo: state.partido.grupo,
-    totalChupitos: state.chupitos,
-    jugadores: jugadoresResumen,
-  };
-
-  // Find winner (max hidalgo)
-  const winner = jugadoresResumen.reduce((a,b) => b.hidalgo > a.hidalgo ? b : a, jugadoresResumen[0]);
-
-  // Render resumen screen
-  document.getElementById('resumen-partido-info').textContent = `${resumen.partido} · ${resumen.fecha_texto} · Grupo ${resumen.grupo}`;
-
-  const wb = document.getElementById('resumen-winner');
-  wb.innerHTML = `<div class="winner-banner">
-    <span class="crown">👑</span>
-    <div class="title">Mayor hidalgo del partido</div>
+  document.getElementById('resumen-partido-info').textContent=`${resumen.partido} · ${resumen.fecha_texto} · Grupo ${resumen.grupo}`;
+  document.getElementById('resumen-winner').innerHTML=`<div class="winner-banner">
+    <span class="crown">👑</span><div class="title">Mayor hidalgo del partido</div>
     <div class="name">${winner.nombre}</div>
-    <div style="font-size:0.8rem;color:var(--texto2);margin-top:4px">+${winner.hidalgo} tragos a favor</div>
-  </div>`;
+    <div style="font-size:.8rem;color:var(--texto2);margin-top:4px">+${winner.hidalgo} tragos a favor</div></div>`;
 
-  const rj = document.getElementById('resumen-jugadores');
-  rj.innerHTML = '';
-  const sorted = [...jugadoresResumen].sort((a,b) => b.hidalgo-a.hidalgo);
-  sorted.forEach((j, idx) => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `<h3 style="color:${playerColor(idx)}">${idx+1}. ${j.nombre}</h3>
-      <div style="font-size:0.75rem;color:var(--texto2);margin-bottom:8px">${j.equipoA}: ${j.jugadorA} · ${j.equipoB}: ${j.jugadorB}</div>
+  const rj=document.getElementById('resumen-jugadores'); rj.innerHTML='';
+  [...jugRes].sort((a,b)=>b.hidalgo-a.hidalgo).forEach((j,idx)=>{
+    const card=document.createElement('div'); card.className='card';
+    card.innerHTML=`<h3 style="color:${playerColor(idx)}">${idx+1}. ${j.nombre}</h3>
+      <div style="font-size:.75rem;color:var(--texto2);margin-bottom:8px">${j.equipoA}: ${j.jugadorA} · ${j.equipoB}: ${j.jugadorB}</div>
       <div class="resumen-stat"><span>🍺 Tragos bebidos</span><span class="resumen-val">${j.bebidos}</span></div>
       <div class="resumen-stat"><span>🎁 Tragos repartidos</span><span class="resumen-val">${j.repartidos}</span></div>
       <div class="resumen-stat"><span>🥃 Chupitos</span><span class="resumen-val">${j.chupitos}</span></div>
       <div class="resumen-stat"><span>💧 Hidalgos de copa</span><span class="resumen-val" style="color:#80c0ff">${j.hidalgos}</span></div>
-      <div class="resumen-stat"><span>⚖️ Balance (rep. − beb.)</span><span class="resumen-val" style="color:${j.hidalgo>=0?'#5ddf85':'#ff8080'}">${j.hidalgo>0?'+':''}${j.hidalgo}</span></div>`;
+      <div class="resumen-stat"><span>⚖️ Balance</span><span class="resumen-val" style="color:${j.hidalgo>=0?'#5ddf85':'#ff8080'}">${j.hidalgo>0?'+':''}${j.hidalgo}</span></div>`;
     rj.appendChild(card);
   });
 
+  document.getElementById('bottomNav').style.display='none';
   showScreen('screen-resumen');
-
-  // Save to Firebase
-  const saved = await fbGuardarResumen(resumen);
-  const dot = document.getElementById('resumenFbDot');
-  const txt = document.getElementById('resumenFbText');
-  if(dot) dot.className = 'fb-dot ' + (saved ? 'ok' : 'err');
-  if(txt) txt.textContent = saved ? '✓ Guardado en Firebase' : 'Error al guardar (sin conexión)';
+  const ok=await fbGuardarResumen(resumen);
+  document.getElementById('resumenFbDot').className='fb-dot '+(ok?'ok':'err');
+  document.getElementById('resumenFbText').textContent=ok?'✓ Guardado en Firebase':'Error al guardar';
 }
 
 // ============================================================
 //  HISTORIAL
 // ============================================================
-async function cargarHistorial() {
-  const c = document.getElementById('historialLista');
-  c.innerHTML = '<div class="loading">Cargando...</div>';
-  const partidos = await fbCargarHistorial();
-  if(!partidos.length) {
-    c.innerHTML = '<div class="loading">No hay partidos guardados aún</div>';
-    return;
-  }
-  c.innerHTML = '';
-  partidos.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'historial-card';
-    const fecha = p.fecha?.toDate ? p.fecha.toDate().toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : (p.fecha_texto||'');
-    let jugadoresHtml = '';
-    if(p.jugadores) {
-      const sorted = [...p.jugadores].sort((a,b) => b.hidalgo-a.hidalgo);
-      sorted.forEach(j => {
-        jugadoresHtml += `<div class="historial-jugador">
-          <span>${j.nombre} <span style="color:var(--texto2);font-size:0.75rem">(${j.jugadorA} · ${j.jugadorB})</span></span>
+async function cargarHistorial(){
+  const c=document.getElementById('historialLista');
+  c.innerHTML='<div class="loading">Cargando...</div>';
+  const partidos=await fbCargarHistorial();
+  if(!partidos.length){ c.innerHTML='<div class="loading">No hay partidos guardados aún</div>'; return; }
+  c.innerHTML='';
+  partidos.forEach(p=>{
+    const card=document.createElement('div'); card.className='historial-card';
+    const fecha=p.fecha?.toDate?p.fecha.toDate().toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):(p.fecha_texto||'');
+    let jHtml='';
+    if(p.jugadores){
+      [...p.jugadores].sort((a,b)=>b.hidalgo-a.hidalgo).forEach(j=>{
+        jHtml+=`<div class="historial-jugador">
+          <span>${j.nombre} <span style="color:var(--texto2);font-size:.72rem">${j.jugadorA} · ${j.jugadorB}</span></span>
           <span style="color:var(--dorado)">🍺${j.bebidos} 🎁${j.repartidos} 🥃${j.chupitos} <span style="color:${j.hidalgo>=0?'#5ddf85':'#ff8080'}">💧${j.hidalgo>0?'+':''}${j.hidalgo}</span></span>
         </div>`;
       });
     }
-    card.innerHTML = `<div class="historial-fecha">${fecha}</div>
+    card.innerHTML=`<div class="historial-fecha">${fecha}</div>
       <div class="historial-partido">${p.partido} · Grupo ${p.grupo||'?'}</div>
-      ${jugadoresHtml}
-      <div style="font-size:0.72rem;color:var(--texto2);margin-top:6px">🥃 ${p.totalChupitos||0} chupitos en total</div>`;
+      ${jHtml}
+      <div style="font-size:.7rem;color:var(--texto2);margin-top:6px">🥃 ${p.totalChupitos||0} chupitos</div>`;
     c.appendChild(card);
   });
 }
@@ -1576,37 +1711,37 @@ async function cargarHistorial() {
 // ============================================================
 //  RESET
 // ============================================================
-function reiniciarJuego() {
-  if(!confirm('¿Nueva partida?')) return;
+function reiniciarJuego(){
   clearInterval(state.varInterval);
   if(state.unsubStats) state.unsubStats();
-  state = {
-    partido:null, numJugadores:0, nombres:[], asignaciones:[],
-    chupitos:0, comodines:{}, varRunning:false, varSeconds:0,
-    varInterval:null, varLastAlert:0, yo:null, sessionId:null, stats:{}, unsubStats:null,
+  if(state.unsubSala) state.unsubSala();
+  state={
+    partido:null,numJugadores:0,nombres:[],asignaciones:[],
+    chupitos:0,comodines:{},varRunning:false,varSeconds:0,
+    varInterval:null,varLastAlert:0,yo:null,salaId:null,
+    esAnfitrion:false,stats:{},unsubStats:null,unsubSala:null,
   };
-  document.getElementById('bottomNav').style.display = 'none';
-  document.getElementById('header-sub').textContent = 'Configura tu partido y empieza a jugar';
-  document.getElementById('numPlayersCard').style.display = 'none';
-  document.getElementById('playerNamesCard').style.display = 'none';
-  document.getElementById('sortearBtn').style.display = 'none';
-  document.getElementById('matchSearch').value = '';
-  renderMatchList();
-  renderNumSelector();
-  showScreen('screen-setup');
-  window.scrollTo(0,0);
+  document.getElementById('bottomNav').style.display='none';
+  document.getElementById('header-sub').textContent='Crea o únete a una partida';
+  document.getElementById('numPlayersCard').style.display='none';
+  document.getElementById('playerNamesCard').style.display='none';
+  document.getElementById('sortearBtn').style.display='none';
+  const ms=document.getElementById('matchSearch'); if(ms) ms.value='';
+  const ci=document.getElementById('codigoInput'); if(ci) ci.value='';
+  document.getElementById('unirse-error').style.display='none';
+  renderMatchList(); renderNumSelector();
+  showScreen('screen-inicio');
 }
 
 // ============================================================
 //  TOAST
 // ============================================================
 let toastTimeout;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
   clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(() => t.classList.remove('show'), 3200);
+  toastTimeout=setTimeout(()=>t.classList.remove('show'),3200);
 }
 </script>
 </body>
