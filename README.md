@@ -2,7 +2,7 @@
 
 Aplicación web para jugar al juego de beber mientras veis partidos del Mundial 2026. Sin instalación, sin servidor — abre el HTML y a jugar.
 
-**[▶ Jugar ahora](https://TU_USUARIO.github.io/mundial2026-juego)**
+**[▶ Jugar ahora](https://kikinha113.github.io/mundial2026-juego)**
 
 -----
 
