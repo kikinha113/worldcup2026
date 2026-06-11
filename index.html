@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<title>🍺 Juego del Mundial 2026</title>
+<style>
+  :root {
+    --verde: #1a6e3c;
+    --verde-claro: #2d9e5c;
+    --dorado: #f0c040;
+    --dorado-hover: #f5d060;
+    --rojo: #c0392b;
+    --fondo: #0b1e13;
+    --fondo2: #102819;
+    --fondo3: #163320;
+    --card: #1c3a28;
+    --card2: #243f2e;
+    --texto: #e8f5e9;
+    --texto2: #a8d5b0;
+    --borde: #2e5e40;
+    --shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    background: linear-gradient(135deg, var(--verde) 0%, #0d4a28 100%);
+    padding: 20px 16px 16px;
+    text-align: center;
+    border-bottom: 3px solid var(--dorado);
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.6);
+  }
+  header h1 { font-size: 1.6rem; color: var(--dorado); letter-spacing: 1px; }
+  header p { font-size: 0.8rem; color: var(--texto2); margin-top: 2px; }
+
+  /* ===== SCREENS ===== */
+  .screen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .screen.active { display: block; }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+  }
+  .card h2 { color: var(--dorado); font-size: 1.1rem; margin-bottom: 10px; }
+  .card h3 { color: var(--verde-claro); font-size: 0.95rem; margin-bottom: 8px; }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    display: block; width: 100%;
+    background: linear-gradient(135deg, var(--dorado), #d4a820);
+    color: #0b1e13;
+    border: none; border-radius: 10px;
+    padding: 14px; font-size: 1rem; font-weight: 700;
+    cursor: pointer; margin-top: 10px;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn.verde {
+    background: linear-gradient(135deg, var(--verde-claro), var(--verde));
+    color: white;
+  }
+  .btn.gris {
+    background: #2a3e2e; color: var(--texto2); font-weight: 500;
+  }
+  .btn.rojo {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+  }
+  .btn.pequeño { padding: 9px 14px; font-size: 0.85rem; display: inline-block; width: auto; }
+
+  /* ===== SETUP SCREEN ===== */
+  .num-selector {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+    margin: 12px 0;
+  }
+  .num-btn {
+    width: 52px; height: 52px; border-radius: 50%;
+    border: 2px solid var(--borde);
+    background: var(--card2); color: var(--texto);
+    font-size: 1.3rem; font-weight: 700;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .num-btn.selected {
+    background: var(--dorado); color: #0b1e13; border-color: var(--dorado);
+  }
+
+  /* ===== MATCH PICKER ===== */
+  .grupo-header {
+    background: var(--verde); color: white;
+    padding: 6px 12px; border-radius: 6px;
+    font-size: 0.75rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    margin: 14px 0 8px;
+  }
+  .partido-item {
+    background: var(--card2); border: 1px solid var(--borde);
+    border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 8px; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .partido-item.selected {
+    border-color: var(--dorado); background: #2a4030;
+  }
+  .partido-item .flags { font-size: 1.4rem; }
+  .partido-item .teams { flex: 1; font-size: 0.9rem; font-weight: 600; }
+  .partido-item .check {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid var(--borde); background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; flex-shrink: 0;
+  }
+  .partido-item.selected .check {
+    background: var(--dorado); border-color: var(--dorado); color: #0b1e13;
+  }
+
+  /* ===== PLAYER NAMES INPUT ===== */
+  .player-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .player-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--verde); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
+  }
+  input[type=text] {
+    flex: 1; background: var(--card2); border: 1px solid var(--borde);
+    border-radius: 8px; padding: 10px 12px;
+    color: var(--texto); font-size: 0.95rem;
+  }
+  input[type=text]:focus { outline: none; border-color: var(--dorado); }
+
+  /* ===== JUGADORES ASSIGNMENT ===== */
+  .asignacion-card {
+    background: var(--card2); border: 1px solid var(--borde);
+    border-radius: 12px; padding: 14px;
+    margin-bottom: 12px;
+  }
+  .asignacion-card .jugador-nombre {
+    font-size: 1rem; font-weight: 700; color: var(--dorado);
+    margin-bottom: 8px;
+  }
+  .team-col { margin-bottom: 6px; }
+  .team-label {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--texto2); margin-bottom: 3px;
+  }
+  .player-tag {
+    display: inline-block; background: var(--verde);
+    color: white; border-radius: 20px;
+    padding: 4px 12px; font-size: 0.85rem; font-weight: 600;
+  }
+  .player-pos {
+    font-size: 0.7rem; color: var(--texto2); margin-left: 4px;
+  }
+
+  /* ===== REGLAS SCREEN ===== */
+  .regla-row {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 8px 0; border-bottom: 1px solid var(--borde);
+  }
+  .regla-row:last-child { border-bottom: none; }
+  .regla-accion { flex: 1; font-size: 0.88rem; color: var(--texto); }
+  .regla-norma {
+    font-size: 0.82rem; color: var(--dorado); font-weight: 600;
+    text-align: right; flex-shrink: 0; max-width: 140px;
+  }
+  .badge {
+    display: inline-block; border-radius: 20px;
+    padding: 2px 8px; font-size: 0.72rem; font-weight: 700;
+    margin-right: 4px;
+  }
+  .badge.sorbo { background: #1a4a2e; color: #5ddf85; }
+  .badge.reparte { background: #3a2a00; color: var(--dorado); }
+  .badge.chupito { background: #4a0000; color: #ff8080; }
+
+  /* ===== COMODINES ===== */
+  .comodin-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 0; border-bottom: 1px solid var(--borde);
+  }
+  .comodin-name { font-size: 0.9rem; font-weight: 600; }
+  .comodin-btns { display: flex; gap: 6px; }
+  .comodin-btn {
+    width: 34px; height: 34px; border-radius: 8px;
+    border: 1px solid var(--borde); background: var(--card2);
+    color: var(--dorado); font-size: 1rem; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .comodin-btn.usado { background: #2a1a00; color: #666; }
+  .comodin-count { color: var(--texto2); font-size: 0.8rem; min-width: 40px; text-align: center; }
+
+  /* ===== VAR TIMER ===== */
+  .var-display {
+    text-align: center; padding: 20px;
+    font-size: 3rem; font-weight: 900;
+    color: var(--dorado); font-variant-numeric: tabular-nums;
+  }
+  .var-label { text-align: center; color: var(--texto2); font-size: 0.85rem; margin-bottom: 12px; }
+
+  /* ===== GOLES COUNTER ===== */
+  .gol-counter {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--card2); border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 8px; border: 1px solid var(--borde);
+  }
+  .gol-num {
+    font-size: 1.8rem; font-weight: 900; color: var(--dorado);
+    min-width: 36px; text-align: center;
+  }
+  .gol-info { flex: 1; padding: 0 12px; }
+  .gol-info .titulo { font-size: 0.9rem; font-weight: 600; }
+  .gol-info .subtitulo { font-size: 0.75rem; color: var(--texto2); }
+
+  /* ===== SCROLL SEARCH ===== */
+  .search-input {
+    width: 100%; background: var(--card2); border: 1px solid var(--borde);
+    border-radius: 10px; padding: 10px 14px;
+    color: var(--texto); font-size: 0.9rem; margin-bottom: 10px;
+  }
+  .search-input:focus { outline: none; border-color: var(--dorado); }
+
+  /* ===== NAV TABS ===== */
+  .nav-tabs {
+    display: flex; gap: 6px; overflow-x: auto;
+    padding: 10px 16px 0;
+    background: var(--fondo2);
+    border-bottom: 2px solid var(--borde);
+    scrollbar-width: none;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    padding: 8px 14px; border-radius: 8px 8px 0 0;
+    background: transparent; color: var(--texto2);
+    border: none; cursor: pointer; font-size: 0.82rem;
+    font-weight: 600; white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .nav-tab.active {
+    background: var(--card); color: var(--dorado);
+    border-bottom: 2px solid var(--dorado);
+  }
+
+  /* ===== TOAST ===== */
+  #toast {
+    position: fixed; bottom: 80px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--dorado); color: #0b1e13;
+    padding: 10px 22px; border-radius: 20px;
+    font-weight: 700; font-size: 0.9rem;
+    opacity: 0; transition: opacity 0.3s, transform 0.3s;
+    z-index: 999; pointer-events: none; max-width: 90vw;
+    text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ===== BOTTOM NAV ===== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--fondo2); border-top: 2px solid var(--borde);
+    display: flex; z-index: 50; max-width: 600px; margin: 0 auto;
+  }
+  .bottom-nav-btn {
+    flex: 1; padding: 10px 4px; background: none; border: none;
+    color: var(--texto2); cursor: pointer; text-align: center;
+    font-size: 0.65rem; display: flex; flex-direction: column;
+    align-items: center; gap: 2px; transition: color 0.15s;
+  }
+  .bottom-nav-btn .icon { font-size: 1.3rem; }
+  .bottom-nav-btn.active { color: var(--dorado); }
+  body { padding-bottom: 64px; }
+
+  /* ===== MISC ===== */
+  .separator { height: 1px; background: var(--borde); margin: 12px 0; }
+  .hint { font-size: 0.78rem; color: var(--texto2); margin-top: 6px; line-height: 1.4; }
+  .flag-big { font-size: 2rem; }
+  .text-center { text-align: center; }
+  .mb-8 { margin-bottom: 8px; }
+  .section-title {
+    font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--texto2);
+    margin: 16px 0 8px;
+  }
+  select {
+    width: 100%; background: var(--card2); border: 1px solid var(--borde);
+    border-radius: 8px; padding: 10px 12px;
+    color: var(--texto); font-size: 0.9rem; margin-bottom: 8px;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a8d5b0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+  }
+  select:focus { outline: none; border-color: var(--dorado); }
+  .vs-text { color: var(--verde-claro); font-size: 0.75rem; padding: 0 4px; }
+  .emoji-big { font-size: 2.5rem; display: block; margin: 0 auto 8px; }
+  .animate-bounce {
+    animation: bounce 0.5s ease;
+  }
+  @keyframes bounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+  .alerta-box {
+    background: #3a0e0e; border: 1px solid #8b2020;
+    border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .alerta-box p { font-size: 0.85rem; color: #ffaaaa; }
+  .tags-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tag {
+    padding: 4px 10px; border-radius: 16px;
+    font-size: 0.78rem; font-weight: 600;
+    background: var(--verde); color: white;
+    border: 1px solid var(--borde);
+  }
+  .tag.portero { background: #1a3a5e; }
+  .tag.defensa { background: #1a4e1a; }
+  .tag.centrocampista { background: #4e3a00; color: var(--dorado); }
+  .tag.delantero { background: #4e1a00; color: #ff9980; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚽ Juego del Mundial 2026 🍺</h1>
+  <p id="header-sub">Configura tu partido y empieza a jugar</p>
+</header>
+
+<!-- BOTTOM NAV (hidden until game starts) -->
+<div class="bottom-nav" id="bottomNav" style="display:none">
+  <button class="bottom-nav-btn active" id="nav-jugadores" onclick="showTab('jugadores')">
+    <span class="icon">👥</span>Jugadores
+  </button>
+  <button class="bottom-nav-btn" id="nav-reglas" onclick="showTab('reglas')">
+    <span class="icon">📋</span>Reglas
+  </button>
+  <button class="bottom-nav-btn" id="nav-comodines" onclick="showTab('comodines')">
+    <span class="icon">🃏</span>Comodines
+  </button>
+  <button class="bottom-nav-btn" id="nav-extra" onclick="showTab('extra')">
+    <span class="icon">⚡</span>Extra
+  </button>
+</div>
+
+<div id="toast"></div>
+
+<!-- ========== SCREEN 1: SETUP ========== -->
+<div class="screen active" id="screen-setup">
+  <div class="card" style="margin-top:12px">
+    <h2>🏆 ¿Qué partido vais a ver?</h2>
+    <p class="hint">Selecciona el partido del Mundial 2026 que estáis viendo.</p>
+    <input type="text" class="search-input" id="matchSearch" placeholder="🔍 Buscar equipo..." oninput="filterMatches()" style="margin-top:10px"/>
+    <div id="matchList"></div>
+  </div>
+
+  <div class="card" id="numPlayersCard" style="display:none">
+    <h2>👥 ¿Cuántos jugáis?</h2>
+    <div class="num-selector" id="numSelector"></div>
+    <p class="hint">Cada persona recibirá un jugador de cada equipo (sorteado aleatoriamente).</p>
+  </div>
+
+  <div class="card" id="playerNamesCard" style="display:none">
+    <h2>✏️ Nombres de los jugadores</h2>
+    <div id="playerNameInputs"></div>
+  </div>
+
+  <div id="sortearBtn" style="display:none">
+    <button class="btn" onclick="sortearJugadores()">🎲 ¡Sortear jugadores!</button>
+  </div>
+</div>
+
+<!-- ========== SCREEN 2: SORTEO RESULT ========== -->
+<div class="screen" id="screen-sorteo">
+  <div class="card" style="margin-top:12px">
+    <h2 class="text-center">🎲 ¡Resultado del sorteo!</h2>
+    <p class="hint text-center">Cada persona tiene un jugador de cada equipo. El juego puede empezar.</p>
+  </div>
+  <div id="sorteoResultado"></div>
+  <button class="btn" onclick="empezarJuego()">⚽ ¡Empieza el partido!</button>
+  <button class="btn gris" onclick="resortear()" style="margin-top:8px">🔄 Volver a sortear</button>
+</div>
+
+<!-- ========== SCREEN 3: JUEGO - JUGADORES ========== -->
+<div class="screen" id="screen-jugadores">
+  <div id="playerCards"></div>
+</div>
+
+<!-- ========== SCREEN 3: JUEGO - REGLAS ========== -->
+<div class="screen" id="screen-reglas">
+  <div class="card" style="margin-top:12px">
+    <h2>📋 Reglas básicas</h2>
+    <div class="regla-row">
+      <div class="regla-accion">⚽ Pase completado de tu jugador</div>
+      <div class="regla-norma"><span class="badge sorbo">1 sorbo tú</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">❌ Pase fallado de tu jugador</div>
+      <div class="regla-norma"><span class="badge sorbo">Bebe el de tu derecha</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">🎯 Disparo de tu jugador</div>
+      <div class="regla-norma"><span class="badge sorbo">Todos 1 sorbo</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">🥅 Disparo a puerta</div>
+      <div class="regla-norma"><span class="badge reparte">Repartes 3</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">⚽ GOL</div>
+      <div class="regla-norma"><span class="badge chupito">Todos chupito</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">🏃 Asistencia</div>
+      <div class="regla-norma"><span class="badge reparte">Repartes 5</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">🟨 Tarjeta amarilla</div>
+      <div class="regla-norma"><span class="badge sorbo">3 sorbos tú</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">🟥 Tarjeta roja</div>
+      <div class="regla-norma"><span class="badge chupito">Acabas tu bebida</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">🏳️ Fuera de juego</div>
+      <div class="regla-norma"><span class="badge sorbo">2 sorbos tú</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">⛔ Falta cometida</div>
+      <div class="regla-norma"><span class="badge sorbo">2 sorbos tú</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">🩹 Falta recibida</div>
+      <div class="regla-norma"><span class="badge reparte">Repartes 2</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">🚩 Córner provocado</div>
+      <div class="regla-norma"><span class="badge reparte">Repartes 3</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">🧤 Parada del portero</div>
+      <div class="regla-norma"><span class="badge reparte">Repartes 3</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">🧤 ¡Paradón del portero!</div>
+      <div class="regla-norma"><span class="badge reparte">Repartes 5</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚡ Normas especiales</h2>
+    <div class="regla-row">
+      <div class="regla-accion">📺 VAR activo — silencio total<br><span style="font-size:0.75rem;color:var(--texto2)">Si cambia la decisión: todos beben. Cada 30s de espera: 1 sorbo</span></div>
+      <div class="regla-norma"><span class="badge chupito">Ver pantalla VAR</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">🤣 Celebración rara/cringe</div>
+      <div class="regla-norma"><span class="badge sorbo">Todos 1 sorbo</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">🎭 Jugador exagerando caída</div>
+      <div class="regla-norma"><span class="badge sorbo">3 sorbos tú</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">🎙️ Comentarista dice: <em>"intensidad", "transición", "bloque bajo"</em> o <em>"partido muy táctico"</em></div>
+      <div class="regla-norma"><span class="badge sorbo">Todos 1 sorbo</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">🏅 MVP del descanso — votación</div>
+      <div class="regla-norma"><span class="badge reparte">Dueño reparte 5</span></div>
+    </div>
+    <div class="regla-row">
+      <div class="regla-accion">🔄 Tu jugador sustituido</div>
+      <div class="regla-norma"><span class="badge sorbo">3 sorbos → tomas al suplente</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🛡️ Límites de seguridad</h2>
+    <div class="regla-row"><div class="regla-accion">⏱️ Máximo 3 sorbos por persona por minuto</div></div>
+    <div class="regla-row"><div class="regla-accion">🃏 1 comodín por parte (saltar cualquier regla)</div></div>
+    <div class="regla-row"><div class="regla-accion">🥃 Máximo 3 chupitos por partido — después los goles = 3 sorbos</div></div>
+    <div class="regla-row"><div class="regla-accion">💧 En el descanso todos beben agua</div></div>
+    <div class="regla-row"><div class="regla-accion">🍕 Debe haber comida en la mesa</div></div>
+    <div class="regla-row"><div class="regla-accion">🚫 Quien quiera parar, para. Sin discusión.</div></div>
+    <div class="regla-row"><div class="regla-accion">🥤 Se puede jugar con agua o refresco</div></div>
+  </div>
+</div>
+
+<!-- ========== SCREEN 3: JUEGO - COMODINES ========== -->
+<div class="screen" id="screen-comodines">
+  <div class="card" style="margin-top:12px">
+    <h2>🃏 Comodines</h2>
+    <p class="hint">Cada jugador tiene 1 comodín por parte para saltarse una regla. Márcalos usados cuando los gastéis.</p>
+  </div>
+  <div class="card">
+    <h3>Primera parte</h3>
+    <div id="comodinesPrimera"></div>
+  </div>
+  <div class="card">
+    <h3>Segunda parte</h3>
+    <div id="comodinesSegunda"></div>
+  </div>
+</div>
+
+<!-- ========== SCREEN 3: JUEGO - EXTRA ========== -->
+<div class="screen" id="screen-extra">
+  <div class="card" style="margin-top:12px">
+    <h2>📺 Temporizador VAR</h2>
+    <p class="hint">Activa cuando el VAR empiece. Cada 30 segundos = 1 sorbo más para todos.</p>
+    <div class="var-label" id="var-estado">Parado</div>
+    <div class="var-display" id="var-timer">0:00</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn verde" id="var-btn" onclick="toggleVar()" style="flex:1">▶ Iniciar VAR</button>
+      <button class="btn gris" onclick="resetVar()" style="flex:1">↺ Reset</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🥃 Control de chupitos</h2>
+    <p class="hint">Máximo 3 chupitos por partido. A partir del 3º, los goles pasan a ser 3 sorbos.</p>
+    <div class="gol-counter">
+      <button onclick="cambiarChupitos(-1)" style="background:none;border:none;color:var(--texto);font-size:1.5rem;cursor:pointer;padding:4px 10px">−</button>
+      <div class="gol-info">
+        <div class="titulo">Chupitos consumidos</div>
+        <div class="subtitulo" id="chupito-status">Quedan 3 de 3</div>
+      </div>
+      <div class="gol-num" id="chupito-count">0</div>
+      <button onclick="cambiarChupitos(1)" style="background:none;border:none;color:var(--dorado);font-size:1.5rem;cursor:pointer;padding:4px 10px">+</button>
+    </div>
+    <div id="chupito-alerta" class="alerta-box" style="display:none">
+      <p>🚨 Límite de chupitos alcanzado. Los goles ahora = <strong>3 sorbos</strong></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🏅 Votación MVP (Descanso)</h2>
+    <p class="hint">Vota al mejor jugador de la primera parte. El dueño reparte 5 sorbos.</p>
+    <div id="mvp-lista"></div>
+  </div>
+
+  <div class="card">
+    <h2>⚙️</h2>
+    <button class="btn rojo" onclick="reiniciarJuego()">🔁 Nueva partida / Cambiar partido</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  DATA: PARTIDOS MUNDIAL 2026 (Fase de grupos)
+// ============================================================
+const PARTIDOS = [
+  // GRUPO A
+  { grupo:"A", e1:"México 🇲🇽", e2:"Sudáfrica 🇿🇦", t1:"Mexico", t2:"South Africa", fecha:"11 Jun" },
+  { grupo:"A", e1:"Corea del Sur 🇰🇷", e2:"Chequia 🇨🇿", t1:"South Korea", t2:"Czechia", fecha:"13 Jun" },
+  { grupo:"A", e1:"México 🇲🇽", e2:"Corea del Sur 🇰🇷", t1:"Mexico", t2:"South Korea", fecha:"17 Jun" },
+  { grupo:"A", e1:"Chequia 🇨🇿", e2:"Sudáfrica 🇿🇦", t1:"Czechia", t2:"South Africa", fecha:"18 Jun" },
+  { grupo:"A", e1:"México 🇲🇽", e2:"Chequia 🇨🇿", t1:"Mexico", t2:"Czechia", fecha:"22 Jun" },
+  { grupo:"A", e1:"Sudáfrica 🇿🇦", e2:"Corea del Sur 🇰🇷", t1:"South Africa", t2:"South Korea", fecha:"22 Jun" },
+  // GRUPO B
+  { grupo:"B", e1:"Canadá 🇨🇦", e2:"Bosnia 🇧🇦", t1:"Canada", t2:"Bosnia", fecha:"12 Jun" },
+  { grupo:"B", e1:"Suiza 🇨🇭", e2:"Qatar 🇶🇦", t1:"Switzerland", t2:"Qatar", fecha:"13 Jun" },
+  { grupo:"B", e1:"Suiza 🇨🇭", e2:"Bosnia 🇧🇦", t1:"Switzerland", t2:"Bosnia", fecha:"18 Jun" },
+  { grupo:"B", e1:"Canadá 🇨🇦", e2:"Qatar 🇶🇦", t1:"Canada", t2:"Qatar", fecha:"18 Jun" },
+  { grupo:"B", e1:"Bosnia 🇧🇦", e2:"Qatar 🇶🇦", t1:"Bosnia", t2:"Qatar", fecha:"23 Jun" },
+  { grupo:"B", e1:"Canadá 🇨🇦", e2:"Suiza 🇨🇭", t1:"Canada", t2:"Switzerland", fecha:"23 Jun" },
+  // GRUPO C
+  { grupo:"C", e1:"Brasil 🇧🇷", e2:"Marruecos 🇲🇦", t1:"Brazil", t2:"Morocco", fecha:"13 Jun" },
+  { grupo:"C", e1:"Escocia 🏴󠁧󠁢󠁳󠁣󠁴󠁿", e2:"Haití 🇭🇹", t1:"Scotland", t2:"Haiti", fecha:"13 Jun" },
+  { grupo:"C", e1:"Brasil 🇧🇷", e2:"Haití 🇭🇹", t1:"Brazil", t2:"Haiti", fecha:"17 Jun" },
+  { grupo:"C", e1:"Marruecos 🇲🇦", e2:"Escocia 🏴󠁧󠁢󠁳󠁣󠁴󠁿", t1:"Morocco", t2:"Scotland", fecha:"18 Jun" },
+  { grupo:"C", e1:"Marruecos 🇲🇦", e2:"Haití 🇭🇹", t1:"Morocco", t2:"Haiti", fecha:"22 Jun" },
+  { grupo:"C", e1:"Brasil 🇧🇷", e2:"Escocia 🏴󠁧󠁢󠁳󠁣󠁴󠁿", t1:"Brazil", t2:"Scotland", fecha:"22 Jun" },
+  // GRUPO D
+  { grupo:"D", e1:"EE.UU. 🇺🇸", e2:"Paraguay 🇵🇾", t1:"United States", t2:"Paraguay", fecha:"12 Jun" },
+  { grupo:"D", e1:"Australia 🇦🇺", e2:"Türkiye 🇹🇷", t1:"Australia", t2:"Turkey", fecha:"13 Jun" },
+  { grupo:"D", e1:"EE.UU. 🇺🇸", e2:"Australia 🇦🇺", t1:"United States", t2:"Australia", fecha:"17 Jun" },
+  { grupo:"D", e1:"Paraguay 🇵🇾", e2:"Türkiye 🇹🇷", t1:"Paraguay", t2:"Turkey", fecha:"17 Jun" },
+  { grupo:"D", e1:"EE.UU. 🇺🇸", e2:"Türkiye 🇹🇷", t1:"United States", t2:"Turkey", fecha:"22 Jun" },
+  { grupo:"D", e1:"Paraguay 🇵🇾", e2:"Australia 🇦🇺", t1:"Paraguay", t2:"Australia", fecha:"22 Jun" },
+  // GRUPO E
+  { grupo:"E", e1:"Alemania 🇩🇪", e2:"Curazao 🇨🇼", t1:"Germany", t2:"Curacao", fecha:"14 Jun" },
+  { grupo:"E", e1:"Ecuador 🇪🇨", e2:"Costa de Marfil 🇨🇮", t1:"Ecuador", t2:"Ivory Coast", fecha:"14 Jun" },
+  { grupo:"E", e1:"Alemania 🇩🇪", e2:"Ecuador 🇪🇨", t1:"Germany", t2:"Ecuador", fecha:"19 Jun" },
+  { grupo:"E", e1:"Costa de Marfil 🇨🇮", e2:"Curazao 🇨🇼", t1:"Ivory Coast", t2:"Curacao", fecha:"19 Jun" },
+  { grupo:"E", e1:"Alemania 🇩🇪", e2:"Costa de Marfil 🇨🇮", t1:"Germany", t2:"Ivory Coast", fecha:"24 Jun" },
+  { grupo:"E", e1:"Ecuador 🇪🇨", e2:"Curazao 🇨🇼", t1:"Ecuador", t2:"Curacao", fecha:"24 Jun" },
+  // GRUPO F
+  { grupo:"F", e1:"Países Bajos 🇳🇱", e2:"Japón 🇯🇵", t1:"Netherlands", t2:"Japan", fecha:"14 Jun" },
+  { grupo:"F", e1:"Túnez 🇹🇳", e2:"Suecia 🇸🇪", t1:"Tunisia", t2:"Sweden", fecha:"15 Jun" },
+  { grupo:"F", e1:"Países Bajos 🇳🇱", e2:"Túnez 🇹🇳", t1:"Netherlands", t2:"Tunisia", fecha:"19 Jun" },
+  { grupo:"F", e1:"Japón 🇯🇵", e2:"Suecia 🇸🇪", t1:"Japan", t2:"Sweden", fecha:"19 Jun" },
+  { grupo:"F", e1:"Países Bajos 🇳🇱", e2:"Suecia 🇸🇪", t1:"Netherlands", t2:"Sweden", fecha:"24 Jun" },
+  { grupo:"F", e1:"Japón 🇯🇵", e2:"Túnez 🇹🇳", t1:"Japan", t2:"Tunisia", fecha:"24 Jun" },
+  // GRUPO G
+  { grupo:"G", e1:"Bélgica 🇧🇪", e2:"Irán 🇮🇷", t1:"Belgium", t2:"Iran", fecha:"14 Jun" },
+  { grupo:"G", e1:"Egipto 🇪🇬", e2:"Nueva Zelanda 🇳🇿", t1:"Egypt", t2:"New Zealand", fecha:"15 Jun" },
+  { grupo:"G", e1:"Bélgica 🇧🇪", e2:"Egipto 🇪🇬", t1:"Belgium", t2:"Egypt", fecha:"19 Jun" },
+  { grupo:"G", e1:"Irán 🇮🇷", e2:"Nueva Zelanda 🇳🇿", t1:"Iran", t2:"New Zealand", fecha:"20 Jun" },
+  { grupo:"G", e1:"Bélgica 🇧🇪", e2:"Nueva Zelanda 🇳🇿", t1:"Belgium", t2:"New Zealand", fecha:"24 Jun" },
+  { grupo:"G", e1:"Irán 🇮🇷", e2:"Egipto 🇪🇬", t1:"Iran", t2:"Egypt", fecha:"24 Jun" },
+  // GRUPO H
+  { grupo:"H", e1:"España 🇪🇸", e2:"Arabia Saudí 🇸🇦", t1:"Spain", t2:"Saudi Arabia", fecha:"15 Jun" },
+  { grupo:"H", e1:"Uruguay 🇺🇾", e2:"Cabo Verde 🇨🇻", t1:"Uruguay", t2:"Cape Verde", fecha:"15 Jun" },
+  { grupo:"H", e1:"España 🇪🇸", e2:"Uruguay 🇺🇾", t1:"Spain", t2:"Uruguay", fecha:"20 Jun" },
+  { grupo:"H", e1:"Arabia Saudí 🇸🇦", e2:"Cabo Verde 🇨🇻", t1:"Saudi Arabia", t2:"Cape Verde", fecha:"20 Jun" },
+  { grupo:"H", e1:"España 🇪🇸", e2:"Cabo Verde 🇨🇻", t1:"Spain", t2:"Cape Verde", fecha:"25 Jun" },
+  { grupo:"H", e1:"Uruguay 🇺🇾", e2:"Arabia Saudí 🇸🇦", t1:"Uruguay", t2:"Saudi Arabia", fecha:"25 Jun" },
+  // GRUPO I
+  { grupo:"I", e1:"Francia 🇫🇷", e2:"Senegal 🇸🇳", t1:"France", t2:"Senegal", fecha:"15 Jun" },
+  { grupo:"I", e1:"Noruega 🇳🇴", e2:"Iraq 🇮🇶", t1:"Norway", t2:"Iraq", fecha:"15 Jun" },
+  { grupo:"I", e1:"Francia 🇫🇷", e2:"Noruega 🇳🇴", t1:"France", t2:"Norway", fecha:"20 Jun" },
+  { grupo:"I", e1:"Senegal 🇸🇳", e2:"Iraq 🇮🇶", t1:"Senegal", t2:"Iraq", fecha:"20 Jun" },
+  { grupo:"I", e1:"Francia 🇫🇷", e2:"Iraq 🇮🇶", t1:"France", t2:"Iraq", fecha:"25 Jun" },
+  { grupo:"I", e1:"Senegal 🇸🇳", e2:"Noruega 🇳🇴", t1:"Senegal", t2:"Norway", fecha:"25 Jun" },
+  // GRUPO J
+  { grupo:"J", e1:"Argentina 🇦🇷", e2:"Algeria 🇩🇿", t1:"Argentina", t2:"Algeria", fecha:"16 Jun" },
+  { grupo:"J", e1:"Austria 🇦🇹", e2:"Jordania 🇯🇴", t1:"Austria", t2:"Jordan", fecha:"16 Jun" },
+  { grupo:"J", e1:"Argentina 🇦🇷", e2:"Austria 🇦🇹", t1:"Argentina", t2:"Austria", fecha:"20 Jun" },
+  { grupo:"J", e1:"Algeria 🇩🇿", e2:"Jordania 🇯🇴", t1:"Algeria", t2:"Jordan", fecha:"21 Jun" },
+  { grupo:"J", e1:"Argentina 🇦🇷", e2:"Jordania 🇯🇴", t1:"Argentina", t2:"Jordan", fecha:"25 Jun" },
+  { grupo:"J", e1:"Algeria 🇩🇿", e2:"Austria 🇦🇹", t1:"Algeria", t2:"Austria", fecha:"25 Jun" },
+  // GRUPO K
+  { grupo:"K", e1:"Portugal 🇵🇹", e2:"Colombia 🇨🇴", t1:"Portugal", t2:"Colombia", fecha:"16 Jun" },
+  { grupo:"K", e1:"Uzbekistán 🇺🇿", e2:"Congo DR 🇨🇩", t1:"Uzbekistan", t2:"Congo DR", fecha:"16 Jun" },
+  { grupo:"K", e1:"Portugal 🇵🇹", e2:"Uzbekistán 🇺🇿", t1:"Portugal", t2:"Uzbekistan", fecha:"21 Jun" },
+  { grupo:"K", e1:"Colombia 🇨🇴", e2:"Congo DR 🇨🇩", t1:"Colombia", t2:"Congo DR", fecha:"21 Jun" },
+  { grupo:"K", e1:"Portugal 🇵🇹", e2:"Congo DR 🇨🇩", t1:"Portugal", t2:"Congo DR", fecha:"26 Jun" },
+  { grupo:"K", e1:"Colombia 🇨🇴", e2:"Uzbekistán 🇺🇿", t1:"Colombia", t2:"Uzbekistan", fecha:"26 Jun" },
+  // GRUPO L
+  { grupo:"L", e1:"Inglaterra 🏴󠁧󠁢󠁥󠁮󠁧󠁿", e2:"Croacia 🇭🇷", t1:"England", t2:"Croatia", fecha:"17 Jun" },
+  { grupo:"L", e1:"Ghana 🇬🇭", e2:"Panamá 🇵🇦", t1:"Ghana", t2:"Panama", fecha:"17 Jun" },
+  { grupo:"L", e1:"Inglaterra 🏴󠁧󠁢󠁥󠁮󠁧󠁿", e2:"Ghana 🇬🇭", t1:"England", t2:"Ghana", fecha:"23 Jun" },
+  { grupo:"L", e1:"Croacia 🇭🇷", e2:"Panamá 🇵🇦", t1:"Croatia", t2:"Panama", fecha:"23 Jun" },
+  { grupo:"L", e1:"Inglaterra 🏴󠁧󠁢󠁥󠁮󠁧󠁿", e2:"Panamá 🇵🇦", t1:"England", t2:"Panama", fecha:"27 Jun" },
+  { grupo:"L", e1:"Ghana 🇬🇭", e2:"Croacia 🇭🇷", t1:"Ghana", t2:"Croatia", fecha:"27 Jun" },
+];
+
+// ============================================================
+//  DATA: JUGADORES POR SELECCIÓN (estrellas + plantilla real 2026)
+// ============================================================
+const PLANTILLAS = {
+  "Mexico": [
+    {n:"G. Ochoa",p:"P"},{n:"Raúl Rangel",p:"P"},{n:"C. Acevedo",p:"P"},
+    {n:"J. Vásquez",p:"D"},{n:"C. Montes",p:"D"},{n:"J. Gallardo",p:"D"},
+    {n:"J. Sánchez",p:"D"},{n:"J. Araujo",p:"D"},{n:"I. Reyes",p:"D"},
+    {n:"B. González",p:"D"},{n:"E. Álvarez",p:"M"},{n:"O. Pineda",p:"M"},
+    {n:"Á. Fidalgo",p:"M"},{n:"O. Vargas",p:"M"},{n:"L. Chávez",p:"M"},
+    {n:"R. Alvarado",p:"M"},{n:"L. Romo",p:"M"},{n:"M. Ruiz",p:"M"},
+    {n:"E. Álvarez Jr.",p:"M"},{n:"D. Lainez",p:"M"},
+    {n:"R. Jiménez",p:"F"},{n:"S. Giménez",p:"F"},{n:"J. Quiñones",p:"F"},
+    {n:"C. Huerta",p:"F"},{n:"A. Vega",p:"F"},{n:"G. Berterame",p:"F"}
+  ],
+  "South Africa": [
+    {n:"R. Williams",p:"P"},{n:"R. Goss",p:"P"},{n:"S. Chaine",p:"P"},
+    {n:"K. Mudau",p:"D"},{n:"N. Sibisi",p:"D"},{n:"I. Okon",p:"D"},
+    {n:"A. Modiba",p:"D"},{n:"S. Kabini",p:"D"},{n:"B. Cross",p:"D"},
+    {n:"T. Mokoena",p:"M"},{n:"T. Mbatha",p:"M"},{n:"Y. Sithole",p:"M"},
+    {n:"J. Adams",p:"M"},{n:"O. Appollis",p:"F"},{n:"I. Rayners",p:"F"},
+    {n:"R. Mofokeng",p:"F"},{n:"E. Makgopa",p:"F"},{n:"T. Zwane",p:"F"},
+    {n:"L. Foster",p:"F"},{n:"T. Moremi",p:"F"},
+    {n:"T. Maseko",p:"F"},{n:"K. Ndamane",p:"D"},{n:"T. Matuludi",p:"D"},
+    {n:"O. Makhanya",p:"D"},{n:"K. Sebelebele",p:"D"},{n:"M. Mbokazi",p:"D"}
+  ],
+  "South Korea": [
+    {n:"J. Hyeon-woo",p:"P"},{n:"K. Seung-gyu",p:"P"},{n:"S. Bum-keun",p:"P"},
+    {n:"K. Min-jae",p:"D"},{n:"C. Yu-min",p:"D"},{n:"L. Han-beom",p:"D"},
+    {n:"P. Jin-seob",p:"D"},{n:"S. Young-woo",p:"D"},{n:"K. Moon-hwan",p:"D"},
+    {n:"L. Ki-hyuk",p:"D"},{n:"Y. Hyun-jun",p:"M"},{n:"P. Seung-ho",p:"M"},
+    {n:"H. In-beom",p:"M"},{n:"B. Jun-ho",p:"M"},{n:"H. Hee-chan",p:"M"},
+    {n:"L. Dong-gyeong",p:"M"},{n:"L. Jae-sung",p:"M"},{n:"L. Kang-in",p:"M"},
+    {n:"E. Ji-sung",p:"M"},{n:"Son Heung-min",p:"F"},
+    {n:"O. Hyeon-gyu",p:"F"},{n:"C. Gue-sung",p:"F"},{n:"J. Castrop",p:"D"},
+    {n:"L. Tae-seok",p:"D"},{n:"K. Tae-hyeon",p:"D"},{n:"K. Jin-kyu",p:"M"}
+  ],
+  "Czechia": [
+    {n:"M. Kovář",p:"P"},{n:"J. Staněk",p:"P"},{n:"L. Horníček",p:"P"},
+    {n:"V. Coufal",p:"D"},{n:"D. Douděra",p:"D"},{n:"T. Holeš",p:"D"},
+    {n:"R. Hranáč",p:"D"},{n:"L. Krejčí",p:"D"},{n:"D. Zima",p:"D"},
+    {n:"D. Jurásek",p:"D"},{n:"Š. Chaloupek",p:"D"},
+    {n:"T. Souček",p:"M"},{n:"P. Šulc",p:"M"},{n:"L. Červ",p:"M"},
+    {n:"L. Provod",p:"M"},{n:"M. Sadílek",p:"M"},{n:"P. Bucha",p:"M"},
+    {n:"A. Sojka",p:"M"},{n:"P. Schick",p:"F"},{n:"A. Hložek",p:"F"},
+    {n:"T. Chorý",p:"F"},{n:"M. Chytil",p:"F"},{n:"J. Kuchta",p:"F"},
+    {n:"C. Kabongo",p:"F"},{n:"H. Sochůrek",p:"M"},{n:"D. Višinský",p:"M"}
+  ],
+  "Canada": [
+    {n:"C. Brady",p:"P"},{n:"M. Freese",p:"P"},{n:"M. Turner",p:"P"},
+    {n:"S. Dest",p:"D"},{n:"M. McKenzie",p:"D"},{n:"M. Arfsten",p:"D"},
+    {n:"A. Freeman",p:"D"},{n:"J. Araujo",p:"D"},{n:"L. Johnston",p:"D"},
+    {n:"D. Buchanan",p:"D"},{n:"S. Larin",p:"F"},{n:"J. David",p:"F"},
+    {n:"A. Davies",p:"D"},{n:"C. Eustaquio",p:"M"},{n:"I. Osorio",p:"M"},
+    {n:"M. Hoilett",p:"F"},{n:"S. Piette",p:"M"},{n:"A. Hutchinson",p:"M"},
+    {n:"K. Cavallini",p:"F"},{n:"B. Tabla",p:"M"},
+    {n:"R. Adekugbe",p:"D"},{n:"T. Borjan",p:"P"},{n:"D. Campbell",p:"F"},
+    {n:"L. Laryea",p:"D"},{n:"M. Kaye",p:"M"},{n:"C. Roldan",p:"M"}
+  ],
+  "Switzerland": [
+    {n:"G. Kobel",p:"P"},{n:"Y. Mvogo",p:"P"},{n:"M. Keller",p:"P"},
+    {n:"M. Akanji",p:"D"},{n:"N. Elvedi",p:"D"},{n:"R. Rodriguez",p:"D"},
+    {n:"S. Widmer",p:"D"},{n:"M. Muheim",p:"D"},{n:"A. Amenda",p:"D"},
+    {n:"E. Cömert",p:"D"},{n:"L. Jaquez",p:"D"},
+    {n:"G. Xhaka",p:"M"},{n:"R. Freuler",p:"M"},{n:"D. Zakaria",p:"M"},
+    {n:"A. Jashari",p:"M"},{n:"D. Sow",p:"M"},{n:"F. Rieder",p:"M"},
+    {n:"C. Fassnacht",p:"M"},{n:"R. Vargas",p:"M"},
+    {n:"B. Embolo",p:"F"},{n:"N. Okafor",p:"F"},{n:"D. Ndoye",p:"F"},
+    {n:"Z. Amdouni",p:"F"},{n:"C. Itten",p:"F"},{n:"J. Manzambi",p:"M"},
+    {n:"M. Aebischer",p:"M"}
+  ],
+  "Qatar": [
+    {n:"M. Barsham",p:"P"},{n:"S. Ellethy",p:"P"},{n:"M. Abunada",p:"P"},
+    {n:"B. Khoukhi",p:"D"},{n:"P. Miguel",p:"D"},{n:"S. Al-Brake",p:"D"},
+    {n:"T. Salman",p:"D"},{n:"L. Mendes",p:"D"},{n:"R. Al-Ali",p:"D"},
+    {n:"B. Al-Rawi",p:"D"},{n:"A. Al-Oui",p:"D"},
+    {n:"K. Boudiaf",p:"M"},{n:"A. Hatem",p:"M"},{n:"A. Madibo",p:"M"},
+    {n:"A. Fathy",p:"M"},{n:"J. Gaber",p:"M"},
+    {n:"A. Afif",p:"F"},{n:"A. Ali",p:"F"},{n:"H. Al-Haydos",p:"F"},
+    {n:"M. Muntari",p:"F"},{n:"E. Junior",p:"F"},{n:"T. Mohammed",p:"F"},
+    {n:"S. Soria",p:"F"},{n:"A. Al-Ganehi",p:"F"},
+    {n:"Y. Abdurisag",p:"F"},{n:"A. Alaa",p:"F"}
+  ],
+  "Bosnia": [
+    {n:"N. Vasilj",p:"P"},{n:"M. Zlomislić",p:"P"},{n:"O. Hadžikić",p:"P"},
+    {n:"S. Kolašinac",p:"D"},{n:"A. Dedić",p:"D"},{n:"N. Mujakić",p:"D"},
+    {n:"N. Katić",p:"D"},{n:"T. Muharemović",p:"D"},{n:"D. Hadžikadunić",p:"D"},
+    {n:"N. Čelik",p:"D"},{n:"S. Radeljić",p:"D"},
+    {n:"A. Hadžiahmetović",p:"M"},{n:"I. Šunjić",p:"M"},{n:"D. Burnić",p:"M"},
+    {n:"B. Tahirović",p:"M"},{n:"A. Memić",p:"M"},{n:"A. Gigović",p:"M"},
+    {n:"E. Mahmić",p:"M"},
+    {n:"E. Demirović",p:"F"},{n:"E. Džeko",p:"F"},{n:"K. Alajbegović",p:"F"},
+    {n:"E. Bajraktarević",p:"F"},{n:"H. Tabaković",p:"F"},{n:"S. Baždar",p:"F"},
+    {n:"J. Lukić",p:"F"},{n:"I. Bašić",p:"M"}
+  ],
+  "Brazil": [
+    {n:"Alisson",p:"P"},{n:"Ederson",p:"P"},{n:"Weverton",p:"P"},
+    {n:"Alex Sandro",p:"D"},{n:"Danilo",p:"D"},{n:"Léo Pereira",p:"D"},
+    {n:"Bremer",p:"D"},{n:"Marquinhos",p:"D"},{n:"G. Magalhães",p:"D"},
+    {n:"Wesley",p:"D"},{n:"Ibañez",p:"D"},{n:"D. Santos",p:"D"},
+    {n:"B. Guimarães",p:"M"},{n:"Casemiro",p:"M"},{n:"L. Paquetá",p:"M"},
+    {n:"Fabinho",p:"M"},{n:"D. Santos M.",p:"M"},
+    {n:"Vinícius Jr.",p:"F"},{n:"Raphinha",p:"F"},{n:"Endrick",p:"F"},
+    {n:"G. Martinelli",p:"F"},{n:"Neymar",p:"F"},{n:"M. Cunha",p:"F"},
+    {n:"I. Thiago",p:"F"},{n:"L. Henrique",p:"F"},{n:"Rayan",p:"F"}
+  ],
+  "Morocco": [
+    {n:"Y. Bounou",p:"P"},{n:"M. El Kajoui",p:"P"},{n:"A. Tagnaouti",p:"P"},
+    {n:"A. Hakimi",p:"D"},{n:"N. Aguerd",p:"D"},{n:"N. Mazraoui",p:"D"},
+    {n:"Z. El Ouahdi",p:"D"},{n:"I. Diop",p:"D"},{n:"C. Riad",p:"D"},
+    {n:"A. Salah-Eddine",p:"D"},{n:"Y. Belammari",p:"D"},{n:"R. Halhal",p:"D"},
+    {n:"S. Amrabat",p:"M"},{n:"B. El Khannouss",p:"M"},{n:"N. El Aynaoui",p:"M"},
+    {n:"A. Ounahi",p:"M"},{n:"I. Saibari",p:"M"},{n:"S. El Mourabet",p:"M"},
+    {n:"A. Bouaddi",p:"M"},
+    {n:"B. Díaz",p:"F"},{n:"A. El Kaabi",p:"F"},{n:"S. Rahimi",p:"F"},
+    {n:"A. Ezzalzouli",p:"F"},{n:"A. Amaimouni",p:"F"},
+    {n:"C. Talbi",p:"F"},{n:"Y. Gessime",p:"F"}
+  ],
+  "Scotland": [
+    {n:"A. Gunn",p:"P"},{n:"C. Gordon",p:"P"},{n:"L. Kelly",p:"P"},
+    {n:"A. Robertson",p:"D"},{n:"A. Hickey",p:"D"},{n:"N. Patterson",p:"D"},
+    {n:"K. Tierney",p:"D"},{n:"G. Hanley",p:"D"},{n:"J. Hendry",p:"D"},
+    {n:"J. Souttar",p:"D"},{n:"S. McKenna",p:"D"},{n:"A. Ralston",p:"D"},
+    {n:"S. McTominay",p:"M"},{n:"J. McGinn",p:"M"},{n:"B. Gilmour",p:"M"},
+    {n:"R. Christie",p:"M"},{n:"L. Ferguson",p:"M"},{n:"K. McLean",p:"M"},
+    {n:"B. Gannon-Doak",p:"M"},{n:"F. Curtis",p:"M"},
+    {n:"L. Shankland",p:"F"},{n:"C. Adams",p:"F"},{n:"S. Armstrong",p:"F"},
+    {n:"R. Christie",p:"F"},{n:"D. Hyam",p:"D"},{n:"H. Brown",p:"F"}
+  ],
+  "Haiti": [
+    {n:"J. Placide",p:"P"},{n:"A. Pierre",p:"P"},{n:"J. Duverger",p:"P"},
+    {n:"C. Arcus",p:"D"},{n:"W. Paugain",p:"D"},{n:"D. Lacroix",p:"D"},
+    {n:"M. Expérience",p:"D"},{n:"J. Duverne",p:"D"},{n:"R. Adé",p:"D"},
+    {n:"H. Delcroix",p:"D"},{n:"K. Thermoncy",p:"D"},
+    {n:"C. Sainté",p:"M"},{n:"L. Pierre",p:"M"},{n:"D. Jean Jacques",p:"M"},
+    {n:"J. Bellegarde",p:"M"},{n:"W. Pierre",p:"M"},{n:"D. Simon",p:"M"},
+    {n:"D. Louicius",p:"F"},{n:"J. Casimir",p:"F"},{n:"D. Etienne",p:"F"},
+    {n:"R. Providence",p:"F"},{n:"D. Nazon",p:"F"},{n:"F. Pierrot",p:"F"},
+    {n:"W. Isidor",p:"F"},{n:"Y. Fortuné",p:"F"},{n:"L. Joseph",p:"F"}
+  ],
+  "United States": [
+    {n:"M. Turner",p:"P"},{n:"M. Freese",p:"P"},{n:"C. Brady",p:"P"},
+    {n:"S. Dest",p:"D"},{n:"C. Richards",p:"D"},{n:"M. McKenzie",p:"D"},
+    {n:"T. Zimmermann",p:"D"},{n:"A. Freeman",p:"D"},{n:"M. Arfsten",p:"D"},
+    {n:"M. Robinson",p:"D"},{n:"A. Carter",p:"D"},
+    {n:"T. Adams",p:"M"},{n:"W. McKennie",p:"M"},{n:"Y. Musah",p:"M"},
+    {n:"C. Roldan",p:"M"},{n:"L. Acosta",p:"M"},
+    {n:"C. Pulisic",p:"F"},{n:"R. Pepi",p:"F"},{n:"F. Weah",p:"F"},
+    {n:"J. Sargent",p:"F"},{n:"G. Reyna",p:"F"},{n:"A. Zendejas",p:"M"},
+    {n:"B. Aaronson",p:"M"},{n:"K. DeJohn",p:"D"},{n:"O. Vargas",p:"M"},
+    {n:"R. Ledezma",p:"M"}
+  ],
+  "Australia": [
+    {n:"M. Ryan",p:"P"},{n:"D. Redmayne",p:"P"},{n:"J. Vukovic",p:"P"},
+    {n:"N. Atkinson",p:"D"},{n:"A. Behich",p:"D"},{n:"B. Wright",p:"D"},
+    {n:"K. Rowles",p:"D"},{n:"H. Souttar",p:"D"},{n:"T. Degenek",p:"D"},
+    {n:"R. Strain",p:"D"},{n:"M. Karacic",p:"D"},
+    {n:"A. Mooy",p:"M"},{n:"J. Irvine",p:"M"},{n:"R. McGree",p:"M"},
+    {n:"K. Leckie",p:"M"},{n:"C. Ikonomidis",p:"M"},
+    {n:"M. Kuol",p:"F"},{n:"M. Duke",p:"F"},{n:"M. Goodwin",p:"F"},
+    {n:"R. Baccus",p:"M"},{n:"O. Petratos",p:"F"},{n:"J. Nisbet",p:"F"},
+    {n:"J. Ireland",p:"M"},{n:"C. Geria",p:"D"},{n:"G. Glenney",p:"D"},
+    {n:"C. Fowler",p:"F"}
+  ],
+  "Paraguay": [
+    {n:"A. Silva",p:"P"},{n:"G. Valle",p:"P"},{n:"R. Da Motta",p:"P"},
+    {n:"O. Alderete",p:"D"},{n:"F. Balbuena",p:"D"},{n:"G. Gómez",p:"D"},
+    {n:"J. Giménez",p:"D"},{n:"M. Gamarra",p:"D"},{n:"F. Arzamendia",p:"D"},
+    {n:"I. Espínola",p:"D"},{n:"A. Sanabria",p:"F"},
+    {n:"M. Villasanti",p:"M"},{n:"R. Fernández",p:"M"},{n:"Ángel",p:"F"},
+    {n:"J. Enciso",p:"F"},{n:"M. Alonso",p:"M"},{n:"D. Cubas",p:"M"},
+    {n:"B. Bareiro",p:"F"},{n:"G. Roque",p:"F"},{n:"R. Vásquez",p:"D"},
+    {n:"C. Alonso",p:"M"},{n:"A. Romero",p:"M"},{n:"D. Gómez",p:"F"},
+    {n:"J. Campuzano",p:"M"},{n:"A. Almirón",p:"F"},{n:"B. Arce",p:"D"}
+  ],
+  "Turkey": [
+    {n:"A. Bayindir",p:"P"},{n:"U. Çakır",p:"P"},{n:"A. Erkin",p:"P"},
+    {n:"M. Demiral",p:"D"},{n:"S. Soyuncu",p:"D"},{n:"Z. Celik",p:"D"},
+    {n:"A. Güler",p:"M"},{n:"H. Çalhanoğlu",p:"M"},{n:"K. Aktürkoğlu",p:"F"},
+    {n:"Y. Yazıcı",p:"M"},{n:"B. Yılmaz",p:"F"},{n:"F. Yılmaz",p:"D"},
+    {n:"E. Kökcü",p:"M"},{n:"M. Günok",p:"P"},{n:"O. Kabak",p:"D"},
+    {n:"B. Özcan",p:"M"},{n:"B. Kahveci",p:"M"},{n:"U. Bülbül",p:"F"},
+    {n:"I. Yüksek",p:"M"},{n:"C. Yılmaz",p:"F"},{n:"A. Yıldız",p:"F"},
+    {n:"T. Muldur",p:"D"},{n:"B. Ayhan",p:"D"},{n:"O. Yalçın",p:"F"},
+    {n:"A. Tosun",p:"F"},{n:"C. Akçakin",p:"M"}
+  ],
+  "Germany": [
+    {n:"M. ter Stegen",p:"P"},{n:"O. Baumann",p:"P"},{n:"A. Nübel",p:"P"},
+    {n:"T. Müller",p:"M"},{n:"I. Gündoğan",p:"M"},{n:"J. Kimmich",p:"M"},
+    {n:"L. Goretzka",p:"M"},{n:"F. Wirtz",p:"M"},{n:"J. Musiala",p:"M"},
+    {n:"A. Kroos",p:"M"},{n:"R. Koch",p:"D"},{n:"M. Akanji",p:"D"},
+    {n:"N. Schlotterbeck",p:"D"},{n:"B. Henrichs",p:"D"},{n:"K. Klostermann",p:"D"},
+    {n:"A. Rüdiger",p:"D"},{n:"T. Süle",p:"D"},
+    {n:"K. Havertz",p:"F"},{n:"L. Nmecha",p:"F"},{n:"N. Füllkrug",p:"F"},
+    {n:"D. Gnonto",p:"F"},{n:"L. Sané",p:"F"},{n:"T. Werner",p:"F"},
+    {n:"M. Mittelstädt",p:"D"},{n:"M. Frimpong",p:"D"},{n:"P. Groß",p:"M"}
+  ],
+  "Ecuador": [
+    {n:"H. Galíndez",p:"P"},{n:"M. Ramírez",p:"P"},{n:"G. Valle",p:"P"},
+    {n:"W. Pacho",p:"D"},{n:"P. Hincapié",p:"D"},{n:"J. Ordóñez",p:"D"},
+    {n:"F. Torres",p:"D"},{n:"P. Estupiñán",p:"D"},{n:"Y. Medina",p:"D"},
+    {n:"Á. Preciado",p:"D"},{n:"J. Porozo",p:"D"},
+    {n:"C. Gruezo",p:"M"},{n:"J. Mendez",p:"M"},{n:"A. Minda",p:"M"},
+    {n:"R. Ibarra",p:"M"},{n:"J. Cifuentes",p:"M"},{n:"R. Castillo",p:"F"},
+    {n:"E. Valencia",p:"F"},{n:"M. Caicedo",p:"M"},{n:"Á. Torres",p:"F"},
+    {n:"G. Preciado",p:"F"},{n:"J. Cifuentes",p:"M"},{n:"M. Intriago",p:"M"},
+    {n:"D. Chávez",p:"M"},{n:"K. Rodríguez",p:"F"},{n:"S. Alangás",p:"F"}
+  ],
+  "Ivory Coast": [
+    {n:"Y. Fofana",p:"P"},{n:"D. Gbane",p:"P"},{n:"O. Karamoko",p:"P"},
+    {n:"S. Aurier",p:"D"},{n:"E. Bailly",p:"D"},{n:"W. Deli",p:"D"},
+    {n:"S. Fae",p:"D"},{n:"S. Boly",p:"D"},{n:"H. Meschack",p:"D"},
+    {n:"I. Diallo",p:"D"},{n:"G. Konan",p:"D"},
+    {n:"F. Kessié",p:"M"},{n:"I. Sangaré",p:"M"},{n:"J. Seri",p:"M"},
+    {n:"G. Gradel",p:"M"},{n:"C. Kouamé",p:"M"},
+    {n:"S. Haller",p:"F"},{n:"W. Zaha",p:"F"},{n:"N. Pepe",p:"F"},
+    {n:"I. Konaté",p:"F"},{n:"M. Bamba",p:"F"},{n:"D. Ouattara",p:"F"},
+    {n:"S. Traoré",p:"M"},{n:"A. Bamba",p:"D"},{n:"I. Diabaté",p:"F"},
+    {n:"I. Kessié",p:"M"}
+  ],
+  "Curacao": [
+    {n:"E. Dos Santos",p:"P"},{n:"C. Coronel",p:"P"},{n:"O. Rojer",p:"P"},
+    {n:"C. Daal",p:"D"},{n:"J. Waterman",p:"D"},{n:"K. Pinas",p:"D"},
+    {n:"V. Dos Santos",p:"D"},{n:"J. Fer",p:"D"},{n:"K. Texeira",p:"D"},
+    {n:"E. Fer",p:"M"},{n:"G. Breedijk",p:"M"},{n:"T. Metaxas",p:"M"},
+    {n:"T. Klasen",p:"M"},{n:"J. Bonevacia",p:"M"},{n:"K. Hato",p:"D"},
+    {n:"G. Druijf",p:"F"},{n:"S. Antonisse",p:"F"},{n:"V. Daal",p:"F"},
+    {n:"J. Klok",p:"M"},{n:"K. Semedo",p:"F"},{n:"R. Quasten",p:"F"},
+    {n:"D. Krentz",p:"F"},{n:"C. Pinas",p:"M"},{n:"A. Ruiz",p:"M"},
+    {n:"L. Telles",p:"D"},{n:"B. Hato",p:"D"}
+  ],
+  "Netherlands": [
+    {n:"B. Flekken",p:"P"},{n:"J. Cillessen",p:"P"},{n:"M. Bijlow",p:"P"},
+    {n:"V. van Dijk",p:"D"},{n:"M. de Ligt",p:"D"},{n:"D. Dumfries",p:"D"},
+    {n:"J. Timber",p:"D"},{n:"N. Ake",p:"D"},{n:"J. Hateboer",p:"D"},
+    {n:"I. Gakpo",p:"F"},{n:"X. Simons",p:"M"},{n:"F. de Jong",p:"M"},
+    {n:"R. de Jong",p:"M"},{n:"T. Reijnders",p:"M"},{n:"D. Frimpong",p:"D"},
+    {n:"W. Weghorst",p:"F"},{n:"J. Veerman",p:"M"},{n:"B. Brobbey",p:"F"},
+    {n:"D. Blind",p:"D"},{n:"T. Malen",p:"F"},{n:"N. Zirkzee",p:"F"},
+    {n:"S. van den Berg",p:"D"},{n:"L. de Vrij",p:"D"},{n:"J. Flekken",p:"P"},
+    {n:"K. Gravenberch",p:"M"},{n:"W. Timber",p:"M"}
+  ],
+  "Japan": [
+    {n:"S. Gonda",p:"P"},{n:"D. Schmidt",p:"P"},{n:"K. Ito",p:"P"},
+    {n:"H. Sakai",p:"D"},{n:"K. Itakura",p:"D"},{n:"K. Yoshida",p:"D"},
+    {n:"T. Tomiyasu",p:"D"},{n:"Y. Nagatomo",p:"D"},{n:"S. Endo",p:"M"},
+    {n:"H. Morita",p:"M"},{n:"J. Ueda",p:"F"},{n:"D. Ito",p:"F"},
+    {n:"A. Tanaka",p:"M"},{n:"T. Minamino",p:"F"},{n:"Y. Mitoma",p:"F"},
+    {n:"T. Kamada",p:"M"},{n:"R. Yamane",p:"D"},{n:"K. Kaoru",p:"M"},
+    {n:"W. Endo",p:"M"},{n:"K. Matsuki",p:"D"},{n:"R. Suzuki",p:"M"},
+    {n:"D. Soma",p:"F"},{n:"H. Iwata",p:"D"},{n:"H. Taggart",p:"F"},
+    {n:"H. Fujita",p:"M"},{n:"A. Nishino",p:"D"}
+  ],
+  "Tunisia": [
+    {n:"A. Dahmen",p:"P"},{n:"B. Saïdani",p:"P"},{n:"A. Bel Hadj",p:"P"},
+    {n:"M. Talbi",p:"D"},{n:"M. Meriah",p:"D"},{n:"D. Bronn",p:"D"},
+    {n:"A. Abdi",p:"D"},{n:"W. Chaalali",p:"D"},{n:"H. Laïdouni",p:"M"},
+    {n:"E. Ben Romdhane",p:"M"},{n:"A. Maaloul",p:"D"},{n:"N. Sliti",p:"M"},
+    {n:"W. Khenissi",p:"F"},{n:"Y. Chermiti",p:"F"},{n:"O. Khazri",p:"F"},
+    {n:"H. Msakni",p:"F"},{n:"A. Badri",p:"M"},{n:"O. Marzouki",p:"D"},
+    {n:"F. Ben Mustapha",p:"P"},{n:"I. Jebali",p:"F"},{n:"B. Ben Said",p:"D"},
+    {n:"K. Jaziri",p:"F"},{n:"M. Ben Amor",p:"M"},{n:"M. Laabidi",p:"M"},
+    {n:"A. Kasdaoui",p:"M"},{n:"H. Ayari",p:"D"}
+  ],
+  "Sweden": [
+    {n:"R. Olsen",p:"P"},{n:"K. Nordfeldt",p:"P"},{n:"O. Nyland",p:"P"},
+    {n:"V. Lindelöf",p:"D"},{n:"L. Nilsson",p:"D"},{n:"E. Krafth",p:"D"},
+    {n:"M. Helander",p:"D"},{n:"J. Olsson",p:"D"},{n:"A. Isak",p:"F"},
+    {n:"D. Kulusevski",p:"F"},{n:"E. Forsberg",p:"M"},{n:"A. Ekdal",p:"M"},
+    {n:"K. Svanberg",p:"M"},{n:"J. Larsson",p:"D"},{n:"C. Danielson",p:"D"},
+    {n:"G. Gudmundsson",p:"M"},{n:"R. Quaison",p:"F"},{n:"M. Gyökeres",p:"F"},
+    {n:"K. Olsson",p:"M"},{n:"J. Bengtsson",p:"D"},{n:"B. Augustinsson",p:"D"},
+    {n:"E. Zeneli",p:"M"},{n:"O. Eriksson",p:"F"},{n:"A. Olsson",p:"F"},
+    {n:"P. Gulbrandsen",p:"M"},{n:"I. Lundström",p:"M"}
+  ],
+  "Belgium": [
+    {n:"T. Courtois",p:"P"},{n:"S. Mignolet",p:"P"},{n:"K. Casteels",p:"P"},
+    {n:"J. Vertonghen",p:"D"},{n:"T. Alderweireld",p:"D"},{n:"A. Castagne",p:"D"},
+    {n:"T. Meunier",p:"D"},{n:"J. Theate",p:"D"},{n:"W. Faes",p:"D"},
+    {n:"M. de Ketelaere",p:"M"},{n:"Y. Tielemans",p:"M"},{n:"A. Onana",p:"M"},
+    {n:"A. Doku",p:"F"},{n:"L. Trossard",p:"F"},{n:"D. de Bruyne",p:"M"},
+    {n:"T. Hazard",p:"M"},{n:"M. Lukaku",p:"F"},{n:"X. Leandro Trossard",p:"F"},
+    {n:"O. Mangala",p:"M"},{n:"L. Dendoncker",p:"M"},{n:"C. Debast",p:"D"},
+    {n:"A. Praet",p:"M"},{n:"B. Janssen",p:"D"},{n:"T. Vandenberghe",p:"D"},
+    {n:"O. Origi",p:"F"},{n:"J. Bornauw",p:"D"}
+  ],
+  "Iran": [
+    {n:"A. Beiranvand",p:"P"},{n:"H. Hosseini",p:"P"},{n:"M. Soltani",p:"P"},
+    {n:"S. Hosseini",p:"D"},{n:"R. Rezaeian",p:"D"},{n:"M. Moharrami",p:"D"},
+    {n:"A. Noorafkan",p:"D"},{n:"H. Kanaanizadegan",p:"D"},{n:"M. Torabi",p:"M"},
+    {n:"S. Ezatolahi",p:"M"},{n:"A. Pouraliganji",p:"D"},{n:"S. Azmoun",p:"F"},
+    {n:"M. Taremi",p:"F"},{n:"A. Jahanbakhsh",p:"F"},{n:"S. Ghoddos",p:"F"},
+    {n:"A. Karimi",p:"M"},{n:"V. Amiri",p:"M"},{n:"M. Shojaei",p:"M"},
+    {n:"O. Ebrahimi",p:"M"},{n:"K. Ansarifard",p:"F"},{n:"R. Cheshmi",p:"D"},
+    {n:"I. Hajsafi",p:"D"},{n:"P. Shojaei",p:"M"},{n:"A. Sadeghi",p:"F"},
+    {n:"H. Miri",p:"M"},{n:"A. Beit Saeed",p:"M"}
+  ],
+  "Egypt": [
+    {n:"M. El Shennawy",p:"P"},{n:"A. El Hadary",p:"P"},{n:"K. Eissa",p:"P"},
+    {n:"A. Farag",p:"D"},{n:"A. Hegazy",p:"D"},{n:"A. El Fotouh",p:"D"},
+    {n:"O. Gaber",p:"D"},{n:"M. Abdelmonem",p:"D"},{n:"M. Hamdi",p:"D"},
+    {n:"T. Mohamed",p:"M"},{n:"M. Elneny",p:"M"},{n:"A. Diab",p:"M"},
+    {n:"O. Marmoush",p:"F"},{n:"M. Salah",p:"F"},{n:"A. El Gamal",p:"F"},
+    {n:"R. Sobhi",p:"F"},{n:"S. Ibrahim",p:"M"},{n:"M. Sherif",p:"F"},
+    {n:"A. Ramadan",p:"M"},{n:"T. El Said",p:"D"},{n:"K. El Ahmadi",p:"M"},
+    {n:"Z. El Gamal",p:"F"},{n:"A. Galal",p:"M"},{n:"M. Zaraei",p:"D"},
+    {n:"I. Aboel Gheit",p:"P"},{n:"A. Rashad",p:"F"}
+  ],
+  "New Zealand": [
+    {n:"M. Goldie",p:"P"},{n:"S. Gleeson",p:"P"},{n:"O. Sail",p:"P"},
+    {n:"W. Covenant",p:"D"},{n:"W. Ingham",p:"D"},{n:"M. Gould",p:"D"},
+    {n:"B. Old",p:"D"},{n:"J. Semenyo",p:"D"},{n:"L. Cacace",p:"D"},
+    {n:"R. Doyle",p:"M"},{n:"C. Wood",p:"F"},{n:"B. Ross",p:"F"},
+    {n:"M. Fisher",p:"M"},{n:"M. Elrick",p:"M"},{n:"N. Tatau",p:"F"},
+    {n:"P. McGregor",p:"F"},{n:"O. Sail",p:"D"},{n:"B. Waine",p:"F"},
+    {n:"J. Cook",p:"M"},{n:"R. Waititi-Foster",p:"M"},{n:"K. Read",p:"D"},
+    {n:"H. Sigmund",p:"D"},{n:"E. Nik Ahwee",p:"F"},{n:"C. Forrest",p:"M"},
+    {n:"G. Wyatt",p:"F"},{n:"M. De Vries",p:"F"}
+  ],
+  "Spain": [
+    {n:"U. Simón",p:"P"},{n:"D. Raya",p:"P"},{n:"R. Sánchez",p:"P"},
+    {n:"Carvajal",p:"D"},{n:"Laporte",p:"D"},{n:"P. Torres",p:"D"},
+    {n:"Gayà",p:"D"},{n:"A. Grimaldo",p:"D"},{n:"N. Williams",p:"F"},
+    {n:"L. Yamal",p:"F"},{n:"Pedri",p:"M"},{n:"Gavi",p:"M"},
+    {n:"R. Merino",p:"M"},{n:"M. Valverde",p:"M"},{n:"Fabian Ruiz",p:"M"},
+    {n:"Morata",p:"F"},{n:"F. Torres",p:"F"},{n:"D. Olmo",p:"F"},
+    {n:"G. Ramos",p:"D"},{n:"M. Merino",p:"M"},{n:"B. Collado",p:"M"},
+    {n:"Joselu",p:"F"},{n:"E. García",p:"D"},{n:"A. Zubimendi",p:"M"},
+    {n:"Le Normand",p:"D"},{n:"A. Baena",p:"M"}
+  ],
+  "Uruguay": [
+    {n:"S. Rochet",p:"P"},{n:"F. Muslera",p:"P"},{n:"D. Bentancur",p:"P"},
+    {n:"R. Araujo",p:"D"},{n:"J. Giménez",p:"D"},{n:"M. Olivera",p:"D"},
+    {n:"M. Vina",p:"D"},{n:"L. Coates",p:"D"},{n:"J. Cáceres",p:"D"},
+    {n:"F. Bentancur",p:"D"},{n:"R. Bentancur",p:"M"},{n:"M. Ugarte",p:"M"},
+    {n:"L. Torreira",p:"M"},{n:"F. Valverde",p:"M"},{n:"N. de la Cruz",p:"M"},
+    {n:"L. Suárez",p:"F"},{n:"D. Núñez",p:"F"},{n:"F. Torres",p:"F"},
+    {n:"E. Cavani",p:"F"},{n:"B. Arévalo",p:"M"},{n:"G. De Arrascaeta",p:"M"},
+    {n:"C. Olivera",p:"M"},{n:"M. Pellistri",p:"F"},{n:"L. Aguilar",p:"F"},
+    {n:"S. Cañas",p:"M"},{n:"D. Pereyra",p:"M"}
+  ],
+  "Saudi Arabia": [
+    {n:"M. Al Owais",p:"P"},{n:"Y. Al Mosailem",p:"P"},{n:"A. Al Muaiouf",p:"P"},
+    {n:"S. Al Ghannam",p:"D"},{n:"A. Al Amri",p:"D"},{n:"A. Al Shahrani",p:"D"},
+    {n:"A. Hassan",p:"D"},{n:"A. Hamdan",p:"D"},{n:"Y. Al Shahrani",p:"D"},
+    {n:"M. Kanno",p:"M"},{n:"S. Al Dawsari",p:"F"},{n:"A. Al Malki",p:"M"},
+    {n:"M. Al Burayk",p:"D"},{n:"H. Al Tambakti",p:"D"},{n:"F. Al Brikan",p:"F"},
+    {n:"S. Al Qahtani",p:"M"},{n:"A. Qassem",p:"M"},{n:"N. Al Aqidi",p:"M"},
+    {n:"A. Al Hamdan",p:"F"},{n:"T. Al Asmari",p:"F"},{n:"H. Al Ghannam",p:"M"},
+    {n:"Y. Al Nemer",p:"F"},{n:"A. Al Najei",p:"D"},{n:"K. Al Ghannam",p:"D"},
+    {n:"O. Al Ghamdi",p:"F"},{n:"M. Al Fatil",p:"F"}
+  ],
+  "Cape Verde": [
+    {n:"V. Mendes",p:"P"},{n:"Ø. Nyland",p:"P"},{n:"L. Monteiro",p:"P"},
+    {n:"R. Borges",p:"D"},{n:"M. Alves",p:"D"},{n:"F. Varela",p:"D"},
+    {n:"Ó. Araújo",p:"D"},{n:"O. Semedo",p:"D"},{n:"R. Soares",p:"D"},
+    {n:"Jamiro Monteiro",p:"M"},{n:"G. Andrade",p:"M"},{n:"P. Medina",p:"F"},
+    {n:"Ryan Mendes",p:"F"},{n:"K. Tavares",p:"D"},{n:"R. Benali",p:"M"},
+    {n:"B. Tavares",p:"M"},{n:"K. Lopes",p:"F"},{n:"H. Balde",p:"F"},
+    {n:"I. Pires",p:"M"},{n:"D. Vera",p:"M"},{n:"A. Gomes",p:"F"},
+    {n:"P. Ramos",p:"D"},{n:"J. Gomes",p:"M"},{n:"T. Borges",p:"F"},
+    {n:"F. Brito",p:"D"},{n:"L. Cruz",p:"M"}
+  ],
+  "France": [
+    {n:"M. Maignan",p:"P"},{n:"B. Samba",p:"P"},{n:"R. Risser",p:"P"},
+    {n:"L. Digne",p:"D"},{n:"M. Gusto",p:"D"},{n:"L. Hernández",p:"D"},
+    {n:"T. Hernández",p:"D"},{n:"I. Konaté",p:"D"},{n:"J. Koundé",p:"D"},
+    {n:"M. Lacroix",p:"D"},{n:"W. Saliba",p:"D"},{n:"D. Upamecano",p:"D"},
+    {n:"N'Golo Kanté",p:"M"},{n:"M. Koné",p:"M"},{n:"A. Rabiot",p:"M"},
+    {n:"A. Tchouaméni",p:"M"},{n:"W. Zaïre-Emery",p:"M"},
+    {n:"K. Mbappé",p:"F"},{n:"O. Dembélé",p:"F"},{n:"B. Barcola",p:"F"},
+    {n:"M. Olise",p:"F"},{n:"R. Cherki",p:"F"},{n:"D. Doué",p:"F"},
+    {n:"M. Akliouche",p:"F"},{n:"J. Mateta",p:"F"},{n:"M. Thuram",p:"F"}
+  ],
+  "Senegal": [
+    {n:"E. Mendy",p:"P"},{n:"M. Diaw",p:"P"},{n:"Y. Diouf",p:"P"},
+    {n:"K. Diatta",p:"D"},{n:"A. Mendy",p:"D"},{n:"K. Koulibaly",p:"D"},
+    {n:"E. Diouf",p:"D"},{n:"M. Sarr",p:"D"},{n:"M. Niakhaté",p:"D"},
+    {n:"A. Seck",p:"D"},{n:"I. Jakobs",p:"D"},
+    {n:"I. Gueye",p:"M"},{n:"P. Gueye",p:"M"},{n:"L. Camara",p:"M"},
+    {n:"H. Diarra",p:"M"},{n:"P. Ciss",p:"M"},{n:"P. Sarr",p:"M"},
+    {n:"B. Ndiaye",p:"M"},
+    {n:"S. Mané",p:"F"},{n:"I. Sarr",p:"F"},{n:"I. Ndiaye",p:"F"},
+    {n:"A. Diao",p:"F"},{n:"I. Mbaye",p:"F"},{n:"N. Jackson",p:"F"},
+    {n:"B. Dieng",p:"F"},{n:"C. Ndiaye",p:"F"}
+  ],
+  "Norway": [
+    {n:"Ø. Nyland",p:"P"},{n:"R. Jarstein",p:"P"},{n:"J. Ørjan Nyland",p:"P"},
+    {n:"M. Reginiussen",p:"D"},{n:"S. Strandberg",p:"D"},{n:"O. Ajer",p:"D"},
+    {n:"A. Pedersen",p:"D"},{n:"B. Meling",p:"D"},{n:"V. Linnes",p:"D"},
+    {n:"M. Ødegaard",p:"M"},{n:"S. Berge",p:"M"},{n:"P. Haaland",p:"M"},
+    {n:"E. Haaland",p:"F"},{n:"M. Daehli",p:"M"},{n:"A. Sorloth",p:"F"},
+    {n:"K. Sørloth",p:"M"},{n:"M. Thorsby",p:"M"},{n:"J. Strand Larsen",p:"F"},
+    {n:"O. Nusa",p:"F"},{n:"A. Saltnes",p:"M"},{n:"M. Lund Samuelsen",p:"M"},
+    {n:"T. Deila",p:"D"},{n:"O. Kristiansen",p:"D"},{n:"S. Hauge",p:"F"},
+    {n:"A. Solbakken",p:"F"},{n:"K. Hauge",p:"M"}
+  ],
+  "Iraq": [
+    {n:"M. Hameed",p:"P"},{n:"F. Nouri",p:"P"},{n:"S. Ibrahim",p:"P"},
+    {n:"A. Adnan",p:"D"},{n:"A. Abbas",p:"D"},{n:"B. Mohammed",p:"D"},
+    {n:"M. Mahdi",p:"D"},{n:"A. Qasim",p:"D"},{n:"Z. Fadel",p:"D"},
+    {n:"A. Nader",p:"M"},{n:"A. Al-Yasiri",p:"M"},{n:"O. Abdulrahman",p:"F"},
+    {n:"Y. Mulla Mousa",p:"F"},{n:"A. Al-Haydari",p:"M"},{n:"H. Al-Maiyouf",p:"M"},
+    {n:"M. Al-Sumaidaie",p:"M"},{n:"S. Al-Karbi",p:"D"},{n:"I. Al-Zubaidi",p:"M"},
+    {n:"A. Basim",p:"F"},{n:"M. Rashid",p:"F"},{n:"H. Abdullah",p:"F"},
+    {n:"A. Ibrahim",p:"D"},{n:"M. Nadhim",p:"M"},{n:"A. Salam",p:"F"},
+    {n:"K. Al Agha",p:"F"},{n:"M. Hani",p:"D"}
+  ],
+  "Argentina": [
+    {n:"E. Martínez",p:"P"},{n:"G. Rulli",p:"P"},{n:"F. Musso",p:"P"},
+    {n:"L. Messi",p:"F"},{n:"N. González",p:"F"},{n:"L. Martínez",p:"F"},
+    {n:"J. Álvarez",p:"F"},{n:"Á. Di María",p:"F"},{n:"R. De Paul",p:"M"},
+    {n:"E. Fernández",p:"M"},{n:"L. Paredes",p:"M"},{n:"A. Mac Allister",p:"M"},
+    {n:"G. Lo Celso",p:"M"},{n:"M. Acuña",p:"D"},{n:"N. Otamendi",p:"D"},
+    {n:"L. Lisandro",p:"D"},{n:"N. Molina",p:"D"},{n:"G. Montiel",p:"D"},
+    {n:"C. Romero",p:"D"},{n:"T. Almada",p:"M"},{n:"G. Perrone",p:"M"},
+    {n:"P. Dybala",p:"F"},{n:"V. Zeballos",p:"F"},{n:"F. Palacios",p:"D"},
+    {n:"T. Belmonte",p:"M"},{n:"B. Enciso",p:"M"}
+  ],
+  "Algeria": [
+    {n:"R. Mandrea",p:"P"},{n:"A. Gaabou",p:"P"},{n:"M. Oukkal",p:"P"},
+    {n:"A. Bensebaïni",p:"D"},{n:"R. Ait Nouri",p:"D"},{n:"Z. Ounahi",p:"D"},
+    {n:"Y. Benrahma",p:"F"},{n:"I. Bennacer",p:"M"},{n:"H. Bouchouari",p:"M"},
+    {n:"S. Mebrak",p:"F"},{n:"Y. Belaïli",p:"F"},{n:"A. Zerrouki",p:"M"},
+    {n:"D. Dridi",p:"M"},{n:"Y. Khenissi",p:"F"},{n:"M. Tougai",p:"D"},
+    {n:"A. Chetti",p:"D"},{n:"D. Amine",p:"M"},{n:"I. Slimani",p:"F"},
+    {n:"R. Taider",p:"M"},{n:"A. Delort",p:"F"},{n:"A. Mahrez",p:"F"},
+    {n:"H. Bensebaïni",p:"D"},{n:"O. Khaoui",p:"M"},{n:"A. Salhi",p:"D"},
+    {n:"M. Tahrat",p:"D"},{n:"B. Ounas",p:"F"}
+  ],
+  "Austria": [
+    {n:"P. Pentz",p:"P"},{n:"D. Bachmann",p:"P"},{n:"J. Froschauer",p:"P"},
+    {n:"P. Lienhart",p:"D"},{n:"M. Wöber",p:"D"},{n:"S. Posch",p:"D"},
+    {n:"F. Klein",p:"D"},{n:"P. Wimmer",p:"D"},{n:"A. Prass",p:"D"},
+    {n:"K. Laimer",p:"M"},{n:"N. Sabitzer",p:"M"},{n:"F. Grillitsch",p:"M"},
+    {n:"C. Baumgartner",p:"M"},{n:"M. Weimann",p:"F"},{n:"M. Grüll",p:"M"},
+    {n:"P. Wimmer",p:"M"},{n:"M. Arnautovic",p:"F"},{n:"R. Seiwald",p:"M"},
+    {n:"A. Onisiwo",p:"F"},{n:"G. Gregoritsch",p:"F"},{n:"P. Scharner",p:"M"},
+    {n:"C. Früchtl",p:"P"},{n:"H. Wolf",p:"M"},{n:"F. Joveljic",p:"F"},
+    {n:"A. Ljubicic",p:"M"},{n:"K. Danso",p:"D"}
+  ],
+  "Jordan": [
+    {n:"A. Shafi",p:"P"},{n:"M. Shalash",p:"P"},{n:"S. Odeh",p:"P"},
+    {n:"Y. Al-Rawabdeh",p:"D"},{n:"M. Saleh",p:"D"},{n:"E. Fardous",p:"D"},
+    {n:"K. Hafnawi",p:"D"},{n:"A. Hani",p:"D"},{n:"K. Dabbas",p:"D"},
+    {n:"M. Safi",p:"M"},{n:"B. Al-Tamari",p:"F"},{n:"Y. Naser",p:"M"},
+    {n:"M. Abu Zema",p:"M"},{n:"H. Bani Yaseen",p:"D"},{n:"S. Bani Attiyeh",p:"M"},
+    {n:"O. Al-Aqrabawi",p:"F"},{n:"I. Al-Ajalin",p:"M"},{n:"Y. Al-Bawab",p:"M"},
+    {n:"A. Nawas",p:"F"},{n:"M. Hamad",p:"F"},{n:"A. Hamdan",p:"F"},
+    {n:"S. Al-Khalaileh",p:"D"},{n:"M. Kabha",p:"M"},{n:"H. Al-Sanioura",p:"F"},
+    {n:"A. Al-Rawabdeh",p:"D"},{n:"M. Musa",p:"F"}
+  ],
+  "Portugal": [
+    {n:"R. Patrício",p:"P"},{n:"D. Costa",p:"P"},{n:"J. Sá",p:"P"},
+    {n:"C. Ronaldo",p:"F"},{n:"B. Silva",p:"M"},{n:"R. Neves",p:"M"},
+    {n:"Vitinha",p:"M"},{n:"Otávio",p:"M"},{n:"J. Félix",p:"F"},
+    {n:"R. Leão",p:"F"},{n:"J. Cancelo",p:"D"},{n:"D. Dalot",p:"D"},
+    {n:"N. Semedo",p:"D"},{n:"P. Porro",p:"D"},{n:"R. Dias",p:"D"},
+    {n:"G. Inácio",p:"D"},{n:"A. Silva",p:"D"},{n:"N. Mendes",p:"D"},
+    {n:"G. Ramos",p:"F"},{n:"D. Jota",p:"F"},{n:"B. Fernandes",p:"M"},
+    {n:"P. Neto",p:"F"},{n:"M. Neto",p:"D"},{n:"Tiago Djaló",p:"D"},
+    {n:"F. Conceição",p:"F"},{n:"G. Borges",p:"M"}
+  ],
+  "Colombia": [
+    {n:"C. Vargas",p:"P"},{n:"D. Ospina",p:"P"},{n:"A. Mier",p:"P"},
+    {n:"D. Sánchez",p:"D"},{n:"Y. Mina",p:"D"},{n:"S. Arias",p:"D"},
+    {n:"W. Tesillo",p:"D"},{n:"J. Mojica",p:"D"},{n:"D. Álvarez",p:"D"},
+    {n:"W. Barrios",p:"M"},{n:"J. Lerma",p:"M"},{n:"M. Cabal",p:"D"},
+    {n:"L. Díaz",p:"F"},{n:"J. Durán",p:"F"},{n:"L. Muriel",p:"F"},
+    {n:"R. Arias",p:"M"},{n:"L. Sinisterra",p:"F"},{n:"J. Cuadrado",p:"M"},
+    {n:"J. Porto",p:"M"},{n:"D. Palomino",p:"D"},{n:"J. Quintero",p:"M"},
+    {n:"J. Morales",p:"F"},{n:"K. Cuesta",p:"D"},{n:"E. Sánchez",p:"M"},
+    {n:"J. Arias",p:"D"},{n:"C. Cuesta",p:"D"}
+  ],
+  "Uzbekistan": [
+    {n:"U. Nishonov",p:"P"},{n:"S. Begmatov",p:"P"},{n:"A. Yusupov",p:"P"},
+    {n:"O. Alijonov",p:"D"},{n:"A. Gulyamov",p:"D"},{n:"A. Hamroboyev",p:"D"},
+    {n:"J. Rayimov",p:"D"},{n:"A. Turgunov",p:"D"},{n:"U. Eshmurodov",p:"D"},
+    {n:"O. Zubaydullo",p:"M"},{n:"A. Shomurodov",p:"F"},{n:"A. Shorakhimov",p:"F"},
+    {n:"E. Shomurodov",p:"F"},{n:"A. Botirov",p:"M"},{n:"S. Qodirov",p:"M"},
+    {n:"J. Kholmatov",p:"M"},{n:"F. Tursunov",p:"F"},{n:"U. Yodgorov",p:"F"},
+    {n:"J. Jaloliddinov",p:"M"},{n:"M. Yusupov",p:"M"},{n:"B. Abdullaev",p:"D"},
+    {n:"D. Makhmudov",p:"M"},{n:"K. Komilov",p:"D"},{n:"O. Ortiqov",p:"D"},
+    {n:"S. Mirzayev",p:"F"},{n:"A. Matchanov",p:"M"}
+  ],
+  "Congo DR": [
+    {n:"U. Ilunga",p:"P"},{n:"K. Mbuta",p:"P"},{n:"N. Kidiaba",p:"P"},
+    {n:"S. Mbemba",p:"D"},{n:"F. Musonda",p:"D"},{n:"M. Bongonda",p:"D"},
+    {n:"D. Mukansanga",p:"D"},{n:"P. Luamba",p:"D"},{n:"J. Bolasie",p:"F"},
+    {n:"Y. Meseret",p:"M"},{n:"K. Laba",p:"M"},{n:"D. Kayembe",p:"M"},
+    {n:"B. Ngoy",p:"F"},{n:"O. Ntinda",p:"F"},{n:"C. Mbemba",p:"D"},
+    {n:"A. Kasusula",p:"M"},{n:"M. Bualimoya",p:"F"},{n:"Y. Nzuzi",p:"D"},
+    {n:"W. Lokonga",p:"M"},{n:"M. Lukaku",p:"F"},{n:"N. Longwa",p:"M"},
+    {n:"C. Mfuyi",p:"M"},{n:"M. Mananga",p:"F"},{n:"D. Mbwana",p:"F"},
+    {n:"B. Mabunda",p:"D"},{n:"A. Kitembo",p:"D"}
+  ],
+  "England": [
+    {n:"J. Pickford",p:"P"},{n:"A. Ramsdale",p:"P"},{n:"N. Pope",p:"P"},
+    {n:"K. Walker",p:"D"},{n:"T. Alexander-Arnold",p:"D"},{n:"B. White",p:"D"},
+    {n:"H. Maguire",p:"D"},{n:"J. Gomez",p:"D"},{n:"L. Dunk",p:"D"},
+    {n:"M. Guehi",p:"D"},{n:"K. Trippier",p:"D"},{n:"L. Shaw",p:"D"},
+    {n:"J. Bellingham",p:"M"},{n:"D. Rice",p:"M"},{n:"K. Gallagher",p:"M"},
+    {n:"T. Eze",p:"M"},{n:"C. Palmer",p:"M"},{n:"P. Foden",p:"M"},
+    {n:"H. Kane",p:"F"},{n:"B. Saka",p:"F"},{n:"B. White",p:"F"},
+    {n:"M. Rashford",p:"F"},{n:"O. Watkins",p:"F"},{n:"I. Toney",p:"F"},
+    {n:"J. Maddison",p:"M"},{n:"L. James",p:"D"}
+  ],
+  "Croatia": [
+    {n:"D. Livaković",p:"P"},{n:"I. Grbić",p:"P"},{n:"L. Kalinic",p:"P"},
+    {n:"J. Šutalo",p:"D"},{n:"J. Stanisić",p:"D"},{n:"D. Ćaleta-Car",p:"D"},
+    {n:"B. Sosa",p:"D"},{n:"I. Gvardiol",p:"D"},{n:"I. Perišić",p:"M"},
+    {n:"M. Kovačić",p:"M"},{n:"L. Modrić",p:"M"},{n:"M. Brozović",p:"M"},
+    {n:"I. Rakitić",p:"M"},{n:"N. Vlašić",p:"M"},{n:"M. Pašalić",p:"M"},
+    {n:"A. Kramarić",p:"F"},{n:"B. Petković",p:"F"},{n:"I. Budimir",p:"F"},
+    {n:"I. Mišić",p:"M"},{n:"D. Vida",p:"D"},{n:"T. Sučić",p:"M"},
+    {n:"K. Gori",p:"D"},{n:"J. Šimić",p:"D"},{n:"M. Juranović",p:"D"},
+    {n:"A. Pjaca",p:"F"},{n:"O. Šosa",p:"D"}
+  ],
+  "Ghana": [
+    {n:"L. Ati-Zigi",p:"P"},{n:"J. Mensah",p:"P"},{n:"O. Martey",p:"P"},
+    {n:"A. Frimpong",p:"D"},{n:"A. Ayew",p:"D"},{n:"D. Amartey",p:"D"},
+    {n:"B. Asamoah",p:"D"},{n:"R. Acheampong",p:"D"},{n:"T. Partey",p:"M"},
+    {n:"M. Kudus",p:"M"},{n:"J. Paintsil",p:"F"},{n:"J. Ayew",p:"F"},
+    {n:"A. Ayew Sr.",p:"F"},{n:"K. Schär",p:"D"},{n:"T. Acquah",p:"M"},
+    {n:"D. Sarpong",p:"F"},{n:"B. Benson",p:"F"},{n:"G. Nacho",p:"M"},
+    {n:"O. Boateng",p:"D"},{n:"A. Fuseini",p:"M"},{n:"G. Ofori",p:"D"},
+    {n:"H. Baffour",p:"F"},{n:"N. Sulemana",p:"F"},{n:"O. Antwi",p:"D"},
+    {n:"A. Wireko",p:"M"},{n:"T. Kyereh",p:"M"}
+  ],
+  "Panama": [
+    {n:"L. Mejía",p:"P"},{n:"J. Caldwell",p:"P"},{n:"F. Mosquera",p:"P"},
+    {n:"E. Davis",p:"D"},{n:"M. Murillo",p:"D"},{n:"H. Rodríguez",p:"D"},
+    {n:"J. Góndola",p:"D"},{n:"R. Harvey",p:"D"},{n:"A. Murillo",p:"D"},
+    {n:"A. Fajardo",p:"M"},{n:"A. Avilés",p:"M"},{n:"C. Quintero",p:"M"},
+    {n:"E. Torres",p:"F"},{n:"R. Fajardo",p:"F"},{n:"B. Fajardo",p:"F"},
+    {n:"A. Navarro",p:"F"},{n:"G. Torres",p:"M"},{n:"I. Brown",p:"D"},
+    {n:"J. Murillo",p:"D"},{n:"K. Welch",p:"F"},{n:"O. Anangono",p:"F"},
+    {n:"A. Anderson",p:"M"},{n:"M. Tejada",p:"M"},{n:"A. Gallardo",p:"D"},
+    {n:"C. Peralta",p:"F"},{n:"E. Mauge",p:"M"}
+  ]
+};
+
+// ============================================================
+//  STATE
+// ============================================================
+let state = {
+  partido: null,
+  numJugadores: 0,
+  nombres: [],
+  asignaciones: [], // [{nombre, teamA_player, teamB_player}]
+  chupitos: 0,
+  comodines: {}, // {nombre: {p1:false, p2:false}}
+  varRunning: false,
+  varSeconds: 0,
+  varInterval: null,
+  varLastAlert: 0,
+};
+
+// ============================================================
+//  INIT
+// ============================================================
+window.onload = function() {
+  renderMatchList();
+  renderNumSelector();
+};
+
+// ============================================================
+//  MATCH PICKER
+// ============================================================
+function renderMatchList(filter='') {
+  const c = document.getElementById('matchList');
+  c.innerHTML = '';
+  const grupos = [...new Set(PARTIDOS.map(p => p.grupo))];
+  const fl = filter.toLowerCase();
+  grupos.forEach(g => {
+    const gPartidos = PARTIDOS.filter(p =>
+      p.grupo === g &&
+      (fl==='' || p.e1.toLowerCase().includes(fl) || p.e2.toLowerCase().includes(fl) ||
+       p.t1.toLowerCase().includes(fl) || p.t2.toLowerCase().includes(fl))
+    );
+    if (!gPartidos.length) return;
+    const gh = document.createElement('div');
+    gh.className = 'grupo-header';
+    gh.textContent = `Grupo ${g}`;
+    c.appendChild(gh);
+    gPartidos.forEach((p, i) => {
+      const el = document.createElement('div');
+      el.className = 'partido-item' + (state.partido && state.partido.e1===p.e1 && state.partido.e2===p.e2 ? ' selected' : '');
+      el.innerHTML = `
+        <div class="flags">${p.e1.slice(-2)} ${p.e2.slice(-2)}</div>
+        <div class="teams">${p.e1.split(' ')[0]} <span class="vs-text">vs</span> ${p.e2.split(' ')[0]}<br>
+          <span style="font-size:0.72rem;color:var(--texto2)">${p.fecha} · Grupo ${p.grupo}</span>
+        </div>
+        <div class="check">${state.partido && state.partido.e1===p.e1 && state.partido.e2===p.e2 ? '✓' : ''}</div>`;
+      el.onclick = () => selectPartido(p);
+      c.appendChild(el);
+    });
+  });
+}
+
+function filterMatches() {
+  renderMatchList(document.getElementById('matchSearch').value);
+}
+
+function selectPartido(p) {
+  state.partido = p;
+  renderMatchList(document.getElementById('matchSearch').value);
+  document.getElementById('numPlayersCard').style.display = 'block';
+  document.getElementById('numPlayersCard').scrollIntoView({behavior:'smooth'});
+}
+
+// ============================================================
+//  NUM PLAYERS
+// ============================================================
+function renderNumSelector() {
+  const c = document.getElementById('numSelector');
+  c.innerHTML = '';
+  for(let i=2; i<=10; i++) {
+    const b = document.createElement('button');
+    b.className = 'num-btn' + (state.numJugadores===i ? ' selected' : '');
+    b.textContent = i;
+    b.onclick = () => selectNum(i);
+    c.appendChild(b);
+  }
+}
+
+function selectNum(n) {
+  state.numJugadores = n;
+  renderNumSelector();
+  renderPlayerNameInputs();
+  document.getElementById('playerNamesCard').style.display = 'block';
+  document.getElementById('sortearBtn').style.display = 'block';
+  setTimeout(()=>{
+    document.getElementById('playerNamesCard').scrollIntoView({behavior:'smooth'});
+  }, 100);
+}
+
+function renderPlayerNameInputs() {
+  const c = document.getElementById('playerNameInputs');
+  c.innerHTML = '';
+  for(let i=0; i<state.numJugadores; i++) {
+    const row = document.createElement('div');
+    row.className = 'player-row';
+    row.innerHTML = `
+      <div class="player-avatar" style="background:${playerColor(i)}">${i+1}</div>
+      <input type="text" placeholder="Nombre jugador ${i+1}" id="pname-${i}" value="${state.nombres[i]||''}"/>`;
+    c.appendChild(row);
+  }
+}
+
+const COLORS = ['#2d9e5c','#3a7bd5','#e84393','#f39c12','#9b59b6','#1abc9c','#e74c3c','#f1c40f','#16a085','#8e44ad'];
+function playerColor(i) { return COLORS[i % COLORS.length]; }
+
+// ============================================================
+//  SORTEO
+// ============================================================
+function getPlayersForTeam(teamKey) {
+  return PLANTILLAS[teamKey] || [];
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for(let i=a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function sortearJugadores() {
+  if(!state.partido) { showToast('Elige un partido primero'); return; }
+  if(!state.numJugadores) { showToast('Elige cuántos jugáis'); return; }
+
+  const nombres = [];
+  for(let i=0; i<state.numJugadores; i++) {
+    const v = document.getElementById(`pname-${i}`)?.value?.trim() || `Jugador ${i+1}`;
+    nombres.push(v);
+  }
+  state.nombres = nombres;
+
+  const t1 = state.partido.t1;
+  const t2 = state.partido.t2;
+  const pool1 = getPlayersForTeam(t1);
+  const pool2 = getPlayersForTeam(t2);
+
+  // Shuffle both pools and take N players
+  const shuffled1 = shuffle(pool1);
+  const shuffled2 = shuffle(pool2);
+
+  state.asignaciones = nombres.map((nombre, i) => ({
+    nombre,
+    colorIdx: i,
+    teamA: state.partido.e1,
+    teamB: state.partido.e2,
+    jugadorA: shuffled1[i % shuffled1.length] || {n:'?',p:'?'},
+    jugadorB: shuffled2[i % shuffled2.length] || {n:'?',p:'?'},
+  }));
+
+  // Init comodines
+  state.comodines = {};
+  nombres.forEach(n => { state.comodines[n] = {p1:false, p2:false}; });
+  state.chupitos = 0;
+
+  renderSorteo();
+  showScreen('screen-sorteo');
+}
+
+function renderSorteo() {
+  const c = document.getElementById('sorteoResultado');
+  c.innerHTML = '';
+  state.asignaciones.forEach(a => {
+    const card = document.createElement('div');
+    card.className = 'asignacion-card';
+    const posA = a.jugadorA.p === 'P' ? 'portero' : a.jugadorA.p === 'D' ? 'defensa' : a.jugadorA.p === 'M' ? 'centrocampista' : 'delantero';
+    const posB = a.jugadorB.p === 'P' ? 'portero' : a.jugadorB.p === 'D' ? 'defensa' : a.jugadorB.p === 'M' ? 'centrocampista' : 'delantero';
+    card.innerHTML = `
+      <div class="jugador-nombre" style="color:${playerColor(a.colorIdx)}">👤 ${a.nombre}</div>
+      <div class="team-col">
+        <div class="team-label">${a.teamA}</div>
+        <span class="player-tag"><span class="badge ${posA}" style="margin:0;padding:2px 6px;font-size:0.65rem">${posAbbr(a.jugadorA.p)}</span> ${a.jugadorA.n}</span>
+      </div>
+      <div class="team-col" style="margin-top:6px">
+        <div class="team-label">${a.teamB}</div>
+        <span class="player-tag"><span class="badge ${posB}" style="margin:0;padding:2px 6px;font-size:0.65rem">${posAbbr(a.jugadorB.p)}</span> ${a.jugadorB.n}</span>
+      </div>`;
+    c.appendChild(card);
+  });
+}
+
+function posAbbr(p) {
+  return {P:'POR',D:'DEF',M:'CEN',F:'DEL'}[p] || p;
+}
+
+function resortear() { sortearJugadores(); }
+
+function empezarJuego() {
+  showScreen('screen-jugadores');
+  document.getElementById('bottomNav').style.display = 'flex';
+  document.getElementById('header-sub').textContent = `${state.partido.e1.split(' ')[0]} vs ${state.partido.e2.split(' ')[0]}`;
+  showTab('jugadores');
+  renderPlayerCards();
+  renderComodines();
+  renderMVPLista();
+}
+
+// ============================================================
+//  JUEGO SCREENS
+// ============================================================
+function showTab(tab) {
+  const tabs = ['jugadores','reglas','comodines','extra'];
+  tabs.forEach(t => {
+    document.getElementById(`screen-${t}`).classList.remove('active');
+    document.getElementById(`nav-${t}`).classList.remove('active');
+  });
+  document.getElementById(`screen-${tab}`).classList.add('active');
+  document.getElementById(`nav-${tab}`).classList.add('active');
+}
+
+function renderPlayerCards() {
+  const c = document.getElementById('playerCards');
+  c.innerHTML = '';
+  const div0 = document.createElement('div');
+  div0.style.marginTop = '12px';
+  c.appendChild(div0);
+  state.asignaciones.forEach(a => {
+    const card = document.createElement('div');
+    card.className = 'asignacion-card';
+    const posA = posClass(a.jugadorA.p), posB = posClass(a.jugadorB.p);
+    card.innerHTML = `
+      <div class="jugador-nombre" style="color:${playerColor(a.colorIdx)}">👤 ${a.nombre}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:120px">
+          <div class="team-label">${a.teamA}</div>
+          <div style="margin-top:4px">
+            <span class="badge ${posA}" style="margin-right:4px">${posAbbr(a.jugadorA.p)}</span>
+            <strong>${a.jugadorA.n}</strong>
+          </div>
+        </div>
+        <div style="flex:1;min-width:120px">
+          <div class="team-label">${a.teamB}</div>
+          <div style="margin-top:4px">
+            <span class="badge ${posB}" style="margin-right:4px">${posAbbr(a.jugadorB.p)}</span>
+            <strong>${a.jugadorB.n}</strong>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn pequeño verde" onclick="cambiarJugadorA('${a.nombre}')">🔄 Cambiar ${state.partido.e1.split(' ')[0]}</button>
+        <button class="btn pequeño verde" onclick="cambiarJugadorB('${a.nombre}')">🔄 Cambiar ${state.partido.e2.split(' ')[0]}</button>
+      </div>`;
+    c.appendChild(card);
+  });
+}
+
+function posClass(p) {
+  return {P:'portero',D:'defensa',M:'centrocampista',F:'delantero'}[p]||'';
+}
+
+function cambiarJugadorA(nombre) {
+  const a = state.asignaciones.find(x => x.nombre === nombre);
+  if(!a) return;
+  const pool = getPlayersForTeam(state.partido.t1);
+  const nuevo = pool[Math.floor(Math.random()*pool.length)];
+  a.jugadorA = nuevo;
+  showToast(`${nombre}: nuevo jugador → ${nuevo.n} (${posAbbr(nuevo.p)}) · cuesta 3 sorbos`);
+  renderPlayerCards();
+}
+
+function cambiarJugadorB(nombre) {
+  const a = state.asignaciones.find(x => x.nombre === nombre);
+  if(!a) return;
+  const pool = getPlayersForTeam(state.partido.t2);
+  const nuevo = pool[Math.floor(Math.random()*pool.length)];
+  a.jugadorB = nuevo;
+  showToast(`${nombre}: nuevo jugador → ${nuevo.n} (${posAbbr(nuevo.p)}) · cuesta 3 sorbos`);
+  renderPlayerCards();
+}
+
+// ============================================================
+//  COMODINES
+// ============================================================
+function renderComodines() {
+  ['Primera','Segunda'].forEach(parte => {
+    const key = parte === 'Primera' ? 'p1' : 'p2';
+    const c = document.getElementById(`comodines${parte}`);
+    c.innerHTML = '';
+    state.asignaciones.forEach(a => {
+      const usado = state.comodines[a.nombre][key];
+      const row = document.createElement('div');
+      row.className = 'comodin-row';
+      row.innerHTML = `
+        <div class="comodin-name" style="color:${playerColor(a.colorIdx)}">${a.nombre}</div>
+        <div class="comodin-btns">
+          <button class="comodin-btn ${usado?'usado':''}" onclick="toggleComodin('${a.nombre}','${key}')">
+            ${usado ? '✗' : '🃏'}
+          </button>
+          <span class="comodin-count">${usado ? 'Usado' : 'Disponible'}</span>
+        </div>`;
+      c.appendChild(row);
+    });
+  });
+}
+
+function toggleComodin(nombre, parte) {
+  if(!state.comodines[nombre]) return;
+  state.comodines[nombre][parte] = !state.comodines[nombre][parte];
+  const msg = state.comodines[nombre][parte] ? `${nombre} usa su comodín 🃏` : `${nombre} recupera su comodín`;
+  showToast(msg);
+  renderComodines();
+}
+
+// ============================================================
+//  VAR TIMER
+// ============================================================
+function toggleVar() {
+  if(state.varRunning) {
+    clearInterval(state.varInterval);
+    state.varRunning = false;
+    document.getElementById('var-btn').textContent = '▶ Reanudar VAR';
+    document.getElementById('var-estado').textContent = 'Pausado';
+  } else {
+    state.varRunning = true;
+    document.getElementById('var-btn').textContent = '⏸ Pausar VAR';
+    document.getElementById('var-estado').textContent = '🔴 VAR en curso — ¡SILENCIO!';
+    state.varInterval = setInterval(() => {
+      state.varSeconds++;
+      updateVarDisplay();
+      if(state.varSeconds > 0 && state.varSeconds % 30 === 0 && state.varSeconds !== state.varLastAlert) {
+        state.varLastAlert = state.varSeconds;
+        showToast(`⏱️ ${state.varSeconds}s de VAR → ¡Todos beben 1 sorbo!`);
+      }
+    }, 1000);
+  }
+}
+
+function resetVar() {
+  clearInterval(state.varInterval);
+  state.varRunning = false;
+  state.varSeconds = 0;
+  state.varLastAlert = 0;
+  document.getElementById('var-btn').textContent = '▶ Iniciar VAR';
+  document.getElementById('var-estado').textContent = 'Parado';
+  updateVarDisplay();
+}
+
+function updateVarDisplay() {
+  const m = Math.floor(state.varSeconds/60);
+  const s = state.varSeconds % 60;
+  document.getElementById('var-timer').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+// ============================================================
+//  CHUPITOS
+// ============================================================
+function cambiarChupitos(delta) {
+  state.chupitos = Math.max(0, Math.min(10, state.chupitos + delta));
+  document.getElementById('chupito-count').textContent = state.chupitos;
+  const restante = Math.max(0, 3 - state.chupitos);
+  if(state.chupitos >= 3) {
+    document.getElementById('chupito-status').textContent = '¡Límite alcanzado! Goles = 3 sorbos';
+    document.getElementById('chupito-alerta').style.display = 'block';
+  } else {
+    document.getElementById('chupito-status').textContent = `Quedan ${restante} de 3`;
+    document.getElementById('chupito-alerta').style.display = 'none';
+  }
+  const el = document.getElementById('chupito-count');
+  el.classList.remove('animate-bounce');
+  void el.offsetWidth;
+  el.classList.add('animate-bounce');
+}
+
+// ============================================================
+//  MVP
+// ============================================================
+function renderMVPLista() {
+  const c = document.getElementById('mvp-lista');
+  if(!c) return;
+  c.innerHTML = '';
+  state.asignaciones.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'btn verde';
+    btn.style.marginTop = '6px';
+    btn.innerHTML = `🏅 ${a.nombre} es MVP`;
+    btn.onclick = () => {
+      showToast(`🏅 MVP: ${a.nombre} → reparte 5 sorbos!`);
+    };
+    c.appendChild(btn);
+  });
+}
+
+// ============================================================
+//  UTILS
+// ============================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+let toastTimeout;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function reiniciarJuego() {
+  if(!confirm('¿Empezar una nueva partida?')) return;
+  state = {
+    partido:null, numJugadores:0, nombres:[], asignaciones:[],
+    chupitos:0, comodines:{}, varRunning:false, varSeconds:0,
+    varInterval:null, varLastAlert:0,
+  };
+  clearInterval(state.varInterval);
+  document.getElementById('bottomNav').style.display = 'none';
+  document.getElementById('header-sub').textContent = 'Configura tu partido y empieza a jugar';
+  document.getElementById('numPlayersCard').style.display = 'none';
+  document.getElementById('playerNamesCard').style.display = 'none';
+  document.getElementById('sortearBtn').style.display = 'none';
+  document.getElementById('matchSearch').value = '';
+  renderMatchList();
+  renderNumSelector();
+  showScreen('screen-setup');
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
