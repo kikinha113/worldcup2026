@@ -159,22 +159,6 @@
   .espera-box .big{font-size:3rem;display:block;margin-bottom:8px}
   .espera-box h3{color:var(--dorado);font-size:1.1rem;margin-bottom:6px}
   .espera-box p{font-size:.82rem;color:var(--texto2)}
-  /* TITULAR ROW */
-  .titular-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--borde)}
-  .titular-row:last-child{border-bottom:none}
-  .camiseta{width:28px;height:28px;border-radius:6px;background:var(--verde);color:#fff;font-size:.8rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .titular-nombre{flex:1;font-size:.88rem;font-weight:600}
-  .titular-pos{font-size:.7rem;color:var(--texto2);background:var(--card2);border-radius:10px;padding:2px 6px}
-  /* MANUAL INPUT */
-  .manual-row{display:flex;gap:6px;align-items:center;margin-bottom:8px}
-  .num-input{width:52px;background:var(--card2);border:1px solid var(--borde);border-radius:8px;padding:8px 6px;color:var(--dorado);font-size:.95rem;font-weight:700;text-align:center}
-  .num-input:focus{outline:none;border-color:var(--dorado)}
-  .name-input{flex:1;background:var(--card2);border:1px solid var(--borde);border-radius:8px;padding:8px 10px;color:var(--texto);font-size:.88rem;margin-bottom:0}
-  .name-input:focus{outline:none;border-color:var(--dorado)}
-  .pos-select{width:62px;background:var(--card2);border:1px solid var(--borde);border-radius:8px;padding:8px 4px;color:var(--texto2);font-size:.78rem;text-align:center}
-  .pos-select:focus{outline:none;border-color:var(--dorado)}
-  /* NÚMERO EN ASIGNACION */
-  .num-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;background:var(--verde-claro);color:#fff;font-size:.78rem;font-weight:900;margin-right:5px;flex-shrink:0}
   .status-ok{color:#5ddf85;font-size:.82rem}
   .status-err{color:#ff8080;font-size:.82rem}
   .status-loading{color:var(--dorado);font-size:.82rem}
@@ -239,20 +223,10 @@
     <input type="text" class="search-input" id="matchSearch" placeholder="🔍 Buscar equipo..." oninput="filterMatches()" style="margin-top:8px"/>
     <div id="matchList"></div>
   </div>
-  <div class="card" id="titularesCard" style="display:none">
-    <h2>📋 Once titular</h2>
-    <p class="hint">Cargando los titulares de SofaScore... Si no hay datos del partido aún, puedes introducirlos a mano.</p>
-    <div id="titularesStatus" style="margin:10px 0"></div>
-    <div style="display:flex;gap:8px;margin-bottom:10px">
-      <button class="btn verde pequeño" onclick="cargarTitulares()" style="flex:1">🔄 Cargar de SofaScore</button>
-      <button class="btn gris pequeño" onclick="mostrarEditorTitulares()" style="flex:1">✏️ Introducir a mano</button>
-    </div>
-    <div id="titularesLista"></div>
-  </div>
   <div class="card" id="numPlayersCard" style="display:none">
     <h2>👥 ¿Cuántos jugáis?</h2>
     <div class="num-selector" id="numSelector"></div>
-    <p class="hint">Cada persona recibe un jugador titular de cada equipo sorteado aleatoriamente.</p>
+    <p class="hint">Cada persona recibe un jugador de cada equipo sorteado aleatoriamente.</p>
   </div>
   <div class="card" id="playerNamesCard" style="display:none">
     <h2>✏️ Nombres de todos</h2>
@@ -262,24 +236,6 @@
     <button class="btn" onclick="sortearJugadores()">🎲 ¡Sortear y crear sala!</button>
   </div>
   <button class="btn gris" onclick="showScreen('screen-inicio')" style="margin-top:8px">← Volver</button>
-</div>
-
-<!-- ===== EDITOR TITULARES MANUAL ===== -->
-<div class="screen" id="screen-titulares-manual">
-  <div class="card" style="margin-top:10px">
-    <h2>✏️ Introduce los titulares</h2>
-    <p class="hint">Pon el número y nombre de cada titular mirando SofaScore o la tele. El portero primero.</p>
-  </div>
-  <div class="card">
-    <h3 id="manual-team-a-title">Equipo A</h3>
-    <div id="manual-team-a"></div>
-  </div>
-  <div class="card">
-    <h3 id="manual-team-b-title">Equipo B</h3>
-    <div id="manual-team-b"></div>
-  </div>
-  <button class="btn" onclick="guardarTitularesManual()">✅ Guardar titulares</button>
-  <button class="btn gris" onclick="showScreen('screen-setup')" style="margin-top:8px">← Volver</button>
 </div>
 
 <!-- ===== SALA: ESPERANDO (amigos que se unen ven esto mientras no empieza) ===== -->
@@ -1115,7 +1071,6 @@ let state = {
   stats:{},
   unsubStats:null,
   unsubSala:null,
-  titulares:{a:[],b:[]},
 };
 
 // ============================================================
@@ -1282,172 +1237,9 @@ function filterMatches(){ renderMatchList(document.getElementById('matchSearch')
 
 function selectPartido(p){
   state.partido=p;
-  state.titulares={a:[], b:[]};
   renderMatchList(document.getElementById('matchSearch').value);
-  document.getElementById('titularesCard').style.display='block';
-  document.getElementById('titularesCard').scrollIntoView({behavior:'smooth'});
-  cargarTitulares();
-}
-
-// ============================================================
-//  SOFASCORE TITULARES VIA PROXY
-// ============================================================
-// Mapeo de nombre de equipo → ID de SofaScore
-const SOFASCORE_IDS = {
-  'Mexico':4702,'South Africa':5971,'South Korea':4694,'Czechia':4692,
-  'Canada':4659,'Switzerland':4698,'Qatar':4715,'Bosnia':4808,
-  'Brazil':4758,'Morocco':4741,'Scotland':4695,'Haiti':4808,
-  'United States':4656,'Australia':4752,'Paraguay':4765,'Turkey':4773,
-  'Germany':4711,'Ecuador':4764,'Ivory Coast':4745,'Curacao':4917,
-  'Netherlands':4707,'Japan':4706,'Tunisia':4747,'Sweden':4703,
-  'Belgium':4700,'Iran':4714,'Egypt':4742,'New Zealand':4769,
-  'Spain':4698,'Uruguay':4760,'Saudi Arabia':4716,'Cape Verde':4943,
-  'France':4481,'Senegal':4746,'Norway':4704,'Iraq':4712,
-  'Argentina':4755,'Algeria':4743,'Austria':4693,'Jordan':4813,
-  'Portugal':4709,'Colombia':4762,'Uzbekistan':4937,'Congo DR':4749,
-  'England':4713,'Croatia':4720,'Ghana':4744,'Panama':4840,
-};
-
-async function fetchViaProxy(url){
-  const proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-  const r=await fetch(proxy,{signal:AbortSignal.timeout(8000)});
-  const data=await r.json();
-  return JSON.parse(data.contents);
-}
-
-async function buscarPartidoSofaScore(){
-  // Busca el evento del partido en SofaScore usando los IDs de equipo
-  const idA=SOFASCORE_IDS[state.partido.t1];
-  const idB=SOFASCORE_IDS[state.partido.t2];
-  if(!idA||!idB) return null;
-  // Buscar en próximos eventos del equipo A
-  const url=`https://api.sofascore.com/api/v1/team/${idA}/events/next/0`;
-  const data=await fetchViaProxy(url);
-  if(!data?.events) return null;
-  // Encontrar el partido contra equipo B
-  const evento=data.events.find(e=>
-    (e.homeTeam?.id===idA&&e.awayTeam?.id===idB)||
-    (e.homeTeam?.id===idB&&e.awayTeam?.id===idA)
-  );
-  // Si no está en próximos, buscar en recientes
-  if(!evento){
-    const url2=`https://api.sofascore.com/api/v1/team/${idA}/events/last/0`;
-    const data2=await fetchViaProxy(url2);
-    return data2?.events?.find(e=>
-      (e.homeTeam?.id===idA&&e.awayTeam?.id===idB)||
-      (e.homeTeam?.id===idB&&e.awayTeam?.id===idA)
-    )||null;
-  }
-  return evento;
-}
-
-async function cargarTitulares(){
-  const status=document.getElementById('titularesStatus');
-  const lista=document.getElementById('titularesLista');
-  status.innerHTML='<span class="status-loading">⏳ Buscando el partido en SofaScore...</span>';
-  lista.innerHTML='';
-  try{
-    const evento=await buscarPartidoSofaScore();
-    if(!evento){ throw new Error('Partido no encontrado'); }
-    const eventoId=evento.id;
-    status.innerHTML='<span class="status-loading">⏳ Cargando once titular...</span>';
-    const lineupData=await fetchViaProxy(`https://api.sofascore.com/api/v1/event/${eventoId}/lineups`);
-    if(!lineupData?.home?.players&&!lineupData?.homeTeam?.players){
-      throw new Error('Titulares no disponibles aún');
-    }
-    const homePlayers=(lineupData.home?.players||lineupData.homeTeam?.players||[]).filter(p=>p.position!==null&&!p.substitute);
-    const awayPlayers=(lineupData.away?.players||lineupData.awayTeam?.players||[]).filter(p=>p.position!==null&&!p.substitute);
-    if(!homePlayers.length&&!awayPlayers.length){ throw new Error('Titulares no disponibles aún'); }
-    // Determinar qué equipo es home/away
-    const esHomeA=evento.homeTeam?.id===SOFASCORE_IDS[state.partido.t1];
-    const playersA=esHomeA?homePlayers:awayPlayers;
-    const playersB=esHomeA?awayPlayers:homePlayers;
-    state.titulares={
-      a: playersA.map(p=>({n:p.player?.name||p.player?.shortName||'?', num:p.jerseyNumber||'?', p:mapPos(p.position)})),
-      b: playersB.map(p=>({n:p.player?.name||p.player?.shortName||'?', num:p.jerseyNumber||'?', p:mapPos(p.position)})),
-    };
-    status.innerHTML=`<span class="status-ok">✓ Titulares cargados de SofaScore</span>`;
-    renderTitularesCargados();
-    mostrarSiguienteSetup();
-  }catch(err){
-    status.innerHTML=`<span class="status-err">⚠️ ${err.message==='Titulares no disponibles aún'?'Los titulares aún no están publicados en SofaScore':'No se pudo conectar con SofaScore'} — introdúcelos a mano</span>`;
-    lista.innerHTML='';
-  }
-}
-
-function mapPos(p){
-  if(!p) return 'M';
-  const s=p.toString().toLowerCase();
-  if(s.includes('goalkeeper')||s==='g'||s==='1') return 'P';
-  if(s.includes('defender')||s==='d'||s==='2'||s==='3'||s==='4'||s==='5') return 'D';
-  if(s.includes('midfielder')||s==='m'||s==='6'||s==='7'||s==='8') return 'M';
-  if(s.includes('forward')||s.includes('attacker')||s==='f'||s==='9'||s==='10'||s==='11') return 'F';
-  return 'M';
-}
-
-function renderTitularesCargados(){
-  const lista=document.getElementById('titularesLista');
-  lista.innerHTML='';
-  const renderTeam=(jugadores,teamName)=>{
-    const h=document.createElement('div');
-    h.innerHTML=`<div class="team-label" style="margin:10px 0 6px">${teamName}</div>`;
-    jugadores.forEach(j=>{
-      const row=document.createElement('div'); row.className='titular-row';
-      row.innerHTML=`<div class="camiseta">${j.num}</div>
-        <div class="titular-nombre">${j.n}</div>
-        <div class="titular-pos">${posAbbr(j.p)}</div>`;
-      h.appendChild(row);
-    });
-    lista.appendChild(h);
-  };
-  renderTeam(state.titulares.a, state.partido.e1);
-  renderTeam(state.titulares.b, state.partido.e2);
-}
-
-function mostrarEditorTitulares(){
-  document.getElementById('manual-team-a-title').textContent=state.partido.e1;
-  document.getElementById('manual-team-b-title').textContent=state.partido.e2;
-  renderManualInputs('manual-team-a', state.titulares?.a||[]);
-  renderManualInputs('manual-team-b', state.titulares?.b||[]);
-  showScreen('screen-titulares-manual');
-}
-
-function renderManualInputs(containerId, existing){
-  const c=document.getElementById(containerId); c.innerHTML='';
-  const posOptions='<option value="P">POR</option><option value="D">DEF</option><option value="M">CEN</option><option value="F">DEL</option>';
-  for(let i=0;i<11;i++){
-    const j=existing[i]||{n:'',num:'',p:'M'};
-    const row=document.createElement('div'); row.className='manual-row';
-    row.innerHTML=`<input type="text" class="num-input" maxlength="2" placeholder="Nº" id="${containerId}-num-${i}" value="${j.num||''}"/>
-      <input type="text" class="name-input" placeholder="Nombre jugador ${i+1}" id="${containerId}-name-${i}" value="${j.n||''}"/>
-      <select class="pos-select" id="${containerId}-pos-${i}">${posOptions}</select>`;
-    c.appendChild(row);
-    setTimeout(()=>{
-      const sel=document.getElementById(`${containerId}-pos-${i}`);
-      if(sel) sel.value=j.p||'M';
-    },0);
-  }
-}
-
-function guardarTitularesManual(){
-  const leerTeam=(containerId)=>{
-    const jugadores=[];
-    for(let i=0;i<11;i++){
-      const n=document.getElementById(`${containerId}-name-${i}`)?.value?.trim()||'';
-      const num=document.getElementById(`${containerId}-num-${i}`)?.value?.trim()||'?';
-      const p=document.getElementById(`${containerId}-pos-${i}`)?.value||'M';
-      if(n) jugadores.push({n,num,p});
-    }
-    return jugadores;
-  };
-  const a=leerTeam('manual-team-a');
-  const b=leerTeam('manual-team-b');
-  if(a.length<1||b.length<1){ showToast('Añade al menos un jugador por equipo'); return; }
-  state.titulares={a,b};
-  showScreen('screen-setup');
-  document.getElementById('titularesStatus').innerHTML=`<span class="status-ok">✓ ${a.length} titulares (${state.partido.e1}) y ${b.length} (${state.partido.e2}) guardados</span>`;
-  renderTitularesCargados();
-  mostrarSiguienteSetup();
+  document.getElementById('numPlayersCard').style.display='block';
+  document.getElementById('numPlayersCard').scrollIntoView({behavior:'smooth'});
 }
 
 function mostrarSiguienteSetup(){
@@ -1503,11 +1295,8 @@ async function sortearJugadores(){
     nombres.push(v);
   }
   state.nombres=nombres;
-  // Titulares si los hay, si no plantilla completa con num='?'
-  const poolA=state.titulares?.a?.length?state.titulares.a:(PLANTILLAS[state.partido.t1]||[]).map(j=>({...j,num:'?'}));
-  const poolB=state.titulares?.b?.length?state.titulares.b:(PLANTILLAS[state.partido.t2]||[]).map(j=>({...j,num:'?'}));
-  const shuffled1=shuffle(poolA);
-  const shuffled2=shuffle(poolB);
+  const shuffled1=shuffle((PLANTILLAS[state.partido.t1]||[]).map(j=>({...j,num:'?'})));
+  const shuffled2=shuffle((PLANTILLAS[state.partido.t2]||[]).map(j=>({...j,num:'?'})));
   state.asignaciones=nombres.map((nombre,i)=>({
     nombre, colorIdx:i,
     teamA:state.partido.e1, teamB:state.partido.e2,
@@ -1525,7 +1314,6 @@ async function sortearJugadores(){
   const codigo=genCodigo();
   const salaData={
     codigo, partido:state.partido, asignaciones:state.asignaciones,
-    titulares:state.titulares||{a:[],b:[]},
     estado:'esperando', creadaEn:Date.now(),
   };
   state.salaId=codigo;
@@ -1931,7 +1719,7 @@ function reiniciarJuego(){
     partido:null,numJugadores:0,nombres:[],asignaciones:[],
     chupitos:0,comodines:{},varRunning:false,varSeconds:0,
     varInterval:null,varLastAlert:0,yo:null,salaId:null,
-    esAnfitrion:false,stats:{},unsubStats:null,unsubSala:null,titulares:{a:[],b:[]},
+    esAnfitrion:false,stats:{},unsubStats:null,unsubSala:null,
   };
   document.getElementById('bottomNav').style.display='none';
   document.getElementById('header-sub').textContent='Crea o únete a una partida';
@@ -1958,4 +1746,3 @@ function showToast(msg){
 </script>
 </body>
 </html>
-
